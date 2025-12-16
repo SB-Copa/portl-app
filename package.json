@@ -17,9 +17,9 @@
     "clsx": "^2.1.1",
     "frimousse": "^0.2.0",
     "lucide-react": "^0.510.0",
-    "next": "16.0.6",
-    "react": "19.2.0",
-    "react-dom": "19.2.0",
+    "next": "16.0.10",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
     "tailwind-merge": "^3.3.0"
   },
   "devDependencies": {
@@ -28,7 +28,7 @@
     "@types/react": "19.2.7",
     "@types/react-dom": "19.2.3",
     "eslint": "^9.39.1",
-    "eslint-config-next": "16.0.6",
+    "eslint-config-next": "16.0.10",
     "tailwindcss": "^4.1.18",
     "tw-animate-css": "^1.2.9",
     "typescript": "^5.8.3"
