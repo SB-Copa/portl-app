@@ -13,18 +13,45 @@ export function proxy(request: NextRequest) {
         adminUrl.pathname = pathname.replace(/^\/admin/, '') || '/'
         return NextResponse.redirect(adminUrl)
     }
-
+    
     // admin.domain.com → rewrite to /admin routes
     if (host.startsWith('admin.')) {
         return NextResponse.rewrite(new URL(`/admin${pathname}`, request.url))
     }
 
-    // *.domain.com (wildcard subdomains) → your app
+    // Multi-tenant routing: /[tenant]/... → tenant.localhost:3000/...
+    // Extract tenant name from pathname (first segment after /)
+    const tenantMatch = pathname.match(/^\/([^\/]+)/)
+    if (tenantMatch && tenantMatch[1]) {
+        const potentialTenant = tenantMatch[1]
+        // Skip reserved paths (admin is already handled above)
+        const reservedPaths = ['_next', 'api', 'admin']
+        
+        if (!reservedPaths.includes(potentialTenant) && !host.includes('.')) {
+            // We're on root domain with a tenant path → redirect to tenant subdomain
+            const tenantUrl = new URL(request.url)
+            tenantUrl.host = `${potentialTenant}.${host}`
+            // Remove the /[tenant] prefix from pathname
+            tenantUrl.pathname = pathname.replace(/^\/[^\/]+/, '') || '/'
+            return NextResponse.redirect(tenantUrl)
+        }
+    }
+
+    // *.domain.com (wildcard subdomains) → rewrite to /[tenant] routes
     // Check if it's a subdomain (not www, not admin, not bare domain)
-    const subdomain = host.split('.')[0]
-    if (subdomain && subdomain !== 'www' && subdomain !== 'admin' && host.includes('.')) {
-        // Rewrite to /app/[subdomain] or however you structure it
-        return NextResponse.rewrite(new URL(`/app/${subdomain}${pathname}`, request.url))
+    const hostname = host.split(':')[0] // Remove port
+    const subdomain = hostname.split('.')[0]
+    
+    // Check if we have a subdomain (e.g., tenant.localhost or tenant.example.com)
+    const isSubdomain = hostname.includes('.') && 
+                        subdomain && 
+                        subdomain !== 'www' && 
+                        subdomain !== 'admin' &&
+                        (hostname.includes('.localhost') || hostname.split('.').length > 2)
+    
+    if (isSubdomain) {
+        // Rewrite to /[tenant] dynamic route
+        return NextResponse.rewrite(new URL(`/${subdomain}${pathname}`, request.url))
     }
 
     // domain.com/ → landing page (no rewrite needed, just serve /)
