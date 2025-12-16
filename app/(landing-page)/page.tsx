@@ -1,6 +1,9 @@
+import HeroSection from './hero-section';
+
 export default async function HomePage() {
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-center">
+      <HeroSection />
       <h1>Homepage</h1>
     </div>
   );
