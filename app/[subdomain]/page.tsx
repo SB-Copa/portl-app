@@ -17,7 +17,7 @@ export default async function SubdomainPage({
   // }
 
   return (
-    <div className="flex min-h-screen flex-col bg-gradient-to-b from-blue-50 to-white p-4">
+    <div className="flex min-h-screen flex-col bg-linear-to-b from-blue-50 to-white p-4">
       <div className="absolute top-4 right-4">
         <Link
           href={`${protocol}://${rootDomain}`}
