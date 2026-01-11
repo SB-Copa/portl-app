@@ -25,7 +25,7 @@ export default function HeroSection() {
         {/* Trust Banner */}
         <div className="rounded-full bg-linear-to-tl from-black to-gray-900 px-6 py-2.5 border border-gray-600 flex items-center gap-2">
           <div className="w-3 h-3 bg-white rounded-full animate-breathe"></div>
-          <span className="text-white text-lg">Trusted by 10,000+ event creators worldwide</span>
+          <span className="text-white text-sm">Trusted by 10,000+ event creators worldwide</span>
         </div>
 
         {/* Hero Content */}
@@ -36,19 +36,19 @@ export default function HeroSection() {
           </h1>
 
           {/* Description */}
-          <p className="text-gray-400 text-lg md:text-2xl max-w-3xl leading-relaxed">
+          <p className="text-gray-400 text-lg max-w-3xl leading-relaxed">
             The complete ticketing platform for event organizers and a seamless experience for attendees. Create, manage, and discover events that matter.
           </p>
 
           {/* CTA Buttons */}
           <div className="flex items-center gap-4 mt-4">
-            <Button variant="outline" className="text-black bg-white font-base rounded-2xl py-9 text-xl">
+            <Button className="py-6 px-10">
               <p className="ml-6">
               Start Creating Events
                 </p>
               <ArrowRight className="w-5 h-5 mr-6" />
             </Button>
-            <Button variant="outline" className="text-white bg-transparent border border-white font-base rounded-2xl py-9 px-10 text-xl">
+            <Button variant="outline" className="py-6 px-10">
               Discover Events
             </Button>
           </div>

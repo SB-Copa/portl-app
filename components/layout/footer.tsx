@@ -2,7 +2,7 @@ import React from 'react'
 import Link from 'next/link'
 import { Twitter, Linkedin, Instagram } from 'lucide-react'
 
-export default function FooterSection() {
+export default function Footer() {
     return (
         <footer className="w-full bg-black text-white border-t-white/20 border-t">
             <div className="w-full px-14 py-16">
