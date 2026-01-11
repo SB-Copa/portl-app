@@ -27,9 +27,6 @@ export default async function HomePage() {
         <ContactUsSection />
       </div>
       <div>
-        
-      </div>
-      <div>
         <FooterSection />
       </div>
     </div>
