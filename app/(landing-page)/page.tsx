@@ -4,7 +4,7 @@ import EventsSection from './events-section';
 import AboutUsSection from './about-us-section';
 import FeaturesSection from './features-section';
 import ContactUsSection from './contact-us-section';
-import CtaSection from './cta-section';
+
 import FooterSection from './footer-section';
 
 export default async function HomePage() {
@@ -27,7 +27,7 @@ export default async function HomePage() {
         <ContactUsSection />
       </div>
       <div>
-        <CtaSection />
+        
       </div>
       <div>
         <FooterSection />

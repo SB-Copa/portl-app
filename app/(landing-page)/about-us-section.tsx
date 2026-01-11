@@ -1,6 +1,7 @@
 import React from 'react'
 import { Check, ArrowRight } from 'lucide-react'
 import { Card } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 
 export default function AboutUsSection() {
   const features = [
@@ -20,7 +21,7 @@ export default function AboutUsSection() {
         {/* Left Section - Features and Description */}
         <div className="flex flex-col gap-6">
           {/* Badge */}
-          <div className="rounded-full bg-zinc-900 px-6 py-2.5 border border-zinc-700 w-fit">
+          <div className="rounded-full bg-linear-to-tl from-black to-gray-900 px-6 py-2.5 border border-zinc-700 w-fit">
             <span className="text-white text-lg">For Event Organizers</span>
           </div>
 
@@ -47,10 +48,10 @@ export default function AboutUsSection() {
           </ul>
 
           {/* CTA Button */}
-          <button className="bg-white text-black hover:bg-gray-200 rounded-lg px-6 py-3 text-base font-medium flex items-center justify-center gap-2 transition-colors w-fit mt-4">
+          <Button variant="outline" className="text-black bg-white font-base rounded-2xl text-xl py-9 px-10">
             Start Your First Event
             <ArrowRight className="w-5 h-5" />
-          </button>
+          </Button>
         </div>
 
         {/* Right Section - Dashboard Metrics */}

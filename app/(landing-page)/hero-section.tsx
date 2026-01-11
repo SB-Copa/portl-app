@@ -1,6 +1,7 @@
 import React from 'react'
 import { Users, Calendar, TrendingUp, ArrowRight } from 'lucide-react'
 import { Card } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 
 export default function HeroSection() {
   return (
@@ -41,42 +42,44 @@ export default function HeroSection() {
 
           {/* CTA Buttons */}
           <div className="flex items-center gap-4 mt-4">
-            <button className="bg-white text-black hover:bg-gray-200 rounded-lg px-6 py-6 text-base font-medium flex items-center justify-center gap-2 transition-colors">
+            <Button variant="outline" className="text-black bg-white font-base rounded-2xl py-9 text-xl">
+              <p className="ml-6">
               Start Creating Events
-              <ArrowRight className="w-5 h-5" />
-            </button>
-            <button className="bg-zinc-800 text-white hover:bg-zinc-700 rounded-lg px-6 py-6 text-base font-medium transition-colors">
+                </p>
+              <ArrowRight className="w-5 h-5 mr-6" />
+            </Button>
+            <Button variant="outline" className="text-white bg-transparent border border-white font-base rounded-2xl py-9 px-10 text-xl">
               Discover Events
-            </button>
+            </Button>
           </div>
         </div>
 
         {/* Statistics Section */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-5xl mt-12">
-          <Card>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 w-full max-w-5xl mt-12">
+          <Card className="rounded-2xl py-8">
             {/* Active Community Members */}
-            <div className="flex flex-col items-center text-center">
-              <Users className="w-8 h-8 text-white mb-4" />
-              <div className="text-3xl font-bold text-white mb-2">2.5M+</div>
-              <div className="text-gray-300 text-sm">Active Community Members</div>
+            <div className="flex flex-col items-center text-center gap-4">
+              <Users className="w-12 h-12 text-white" />
+              <div className="text-4xl font-light text-white">2.5M+</div>
+              <div className="text-xl text-gray-300 font-light">Active Community Members</div>
             </div>
           </Card>
 
           {/* Events Hosted Monthly */}
-          <Card>
-            <div className="flex flex-col items-center text-center">
-              <Calendar className="w-8 h-8 text-white mb-4" />
-              <div className="text-3xl font-bold text-white mb-2">50K+</div>
-              <div className="text-gray-300 text-sm">Events Hosted Monthly</div>
+          <Card className="rounded-2xl py-8">
+            <div className="flex flex-col items-center text-center gap-4">
+              <Calendar className="w-12 h-12 text-white" />
+              <div className="text-4xl font-light text-white">50K+</div>
+              <div className="text-xl text-gray-300 font-light">Events Hosted Monthly</div>
             </div>
           </Card>
 
           {/* Customer Satisfaction */}
-          <Card>
-            <div className="flex flex-col items-center text-center">
-              <TrendingUp className="w-8 h-8 text-white mb-4" />
-              <div className="text-3xl font-bold text-white mb-2">98%</div>
-              <div className="text-gray-300 text-sm">Customer Satisfaction</div>
+          <Card className="rounded-2xl py-8">
+            <div className="flex flex-col items-center text-center gap-4">
+              <TrendingUp className="w-12 h-12 text-white" />
+              <div className="text-4xl font-light text-white">98%</div>
+              <div className="text-xl text-gray-300 font-light">Customer Satisfaction</div>
             </div>
           </Card>
         </div>

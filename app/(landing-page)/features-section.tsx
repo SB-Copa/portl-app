@@ -65,9 +65,9 @@ export default function FeaturesSection() {
               </div>
 
               {/* Heart Icon */}
-              <button className="absolute top-6 right-6 text-white bg-zinc-800 rounded-full p-4">
+              <Button variant="outline" className="absolute top-6 right-6 text-white bg-zinc-800 rounded-full p-4">
                 <Heart className="w-6 h-6" strokeWidth={2} />
-              </button>
+              </Button>
 
               {/* Event Title */}
               <h3 className="text-white text-3xl font-base mb-3 pr-12">{event.title}</h3>
@@ -99,7 +99,7 @@ export default function FeaturesSection() {
         {/* Right Section - Features */}
         <div className="flex flex-col gap-7">
           {/* Badge */}
-          <div className="rounded-full bg-zinc-900 px-6 py-2.5 border mt-4 border-zinc-700 w-fit">
+          <div className="rounded-full bg-linear-to-tl from-black to-gray-900 px-6 py-2.5 border mt-4 border-zinc-700 w-fit">
             <span className="text-white text-lg">For Event Attendees</span>
           </div>
 

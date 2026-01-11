@@ -1,6 +1,7 @@
 import React from 'react'
 import { Users, MessageSquare, Share2, Trophy } from 'lucide-react'
 import { Card } from '@/components/ui/card'
+import CtaSection from './cta-section';
 
 export default function ContactUsSection() {
     const contactMethods = [
@@ -30,7 +31,7 @@ export default function ContactUsSection() {
         <div id="contact-us" className="w-full px-16 py-20">
             <div className="flex flex-col items-center gap-4">
                 {/* Badge */}
-                <div className="rounded-full bg-zinc-900 px-6 py-2.5 border border-zinc-700 w-fit">
+                <div className="rounded-full bg-linear-to-tl from-black to-gray-900 px-6 py-2.5 border border-zinc-700 w-fit">
                     <span className="text-white text-lg">Community first</span>
                 </div>
 
@@ -49,7 +50,7 @@ export default function ContactUsSection() {
                     {contactMethods.map((method, index) => {
                         const Icon = method.icon
                         return (
-                            <Card key={index} className="bg-neutral-900 border-zinc-700 rounded-2xl p-8 py-6 flex flex-col items-center text-center gap-4">
+                            <Card key={index} className="bg-neutral-900 border-zinc-700 rounded-2xl p-8 py-10 flex flex-col items-center text-center gap-4">
                                 <div className="w-16 h-16 flex items-center justify-center">
                                     <Icon className="w-12 h-12 text-white" strokeWidth={2} />
                                 </div>
@@ -62,7 +63,7 @@ export default function ContactUsSection() {
 
                 {/* Testimonials Section */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full mt-16">
-                    <Card className="bg-neutral-950 border-zinc-700 rounded-2xl px-12 py-8 flex flex-col gap-4">
+                    <Card className="bg-neutral-950 border-zinc-700 rounded-2xl px-12 py-12 flex flex-col gap-4">
                         <div className="w-20 h-20 bg-slate-700 rounded-full"></div>
                         <div className="flex flex-col gap-1">
                             <h3 className="text-white text-2xl font-base">Sarah Chen</h3>
@@ -95,6 +96,7 @@ export default function ContactUsSection() {
                         </p>
                     </Card>
                 </div>
+                <CtaSection/>
 
                 
             </div>

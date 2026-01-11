@@ -37,7 +37,7 @@ export default function PlatformFeaturesSection() {
   ]
 
   return (
-    <div id="platform-features" className="w-full flex flex-col items-center gap-4 px-6 py-25">
+    <div id="events-section" className="w-full flex flex-col items-center gap-4 px-6 py-25">
       {/* Platform Features Label */}
       <div className="rounded-full bg-linear-to-tl from-black to-gray-900 px-6 py-2.5 border border-gray-600 flex items-center gap-2">
         <span className="text-white text-lg">Platform Features</span>
@@ -54,24 +54,24 @@ export default function PlatformFeaturesSection() {
       </div>
 
       {/* Feature Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-12 w-full max-w-6xl">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-12 w-5/6">
         {features.map((feature, index) => {
           const Icon = feature.icon
           return (
             <Card
               key={index}
-              className="bg-zinc-800 border-zinc-700 rounded-lg p-6 gap-4"
+              className="bg-zinc-900 border-0 rounded-2xl py-8 px-10 flex flex-col gap-5"
             >
               {/* Icon */}
-              <div className="w-12 h-12 bg-zinc-900 rounded-lg flex items-center justify-center">
-                <Icon className="w-6 h-6 text-white" />
+              <div className="rounded-2xl w-16 h-16 bg-zinc-800 flex items-center justify-center">
+                <Icon className="w-8 h-8 text-white" />
               </div>
 
               {/* Title */}
-              <h3 className="text-white font-bold text-xl">{feature.title}</h3>
+              <h3 className="text-white text-3xl font-base">{feature.title}</h3>
 
               {/* Description */}
-              <p className="text-gray-400 text-sm leading-relaxed">
+              <p className="text-gray-400 text-2xl/8 font-light">
                 {feature.description}
               </p>
             </Card>
