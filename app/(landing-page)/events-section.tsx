@@ -44,11 +44,11 @@ export default function PlatformFeaturesSection() {
       </div>
 
       {/* Header Section */}
-      <div className="flex flex-col items-center gap-4 max-w-6xl text-center">
-        <h2 className="text-4xl md:text-5xl lg:text-6xl font-light text-white leading-tight">
+      <div className="flex flex-col items-center gap-4 mt-3 max-w-6xl text-center">
+        <h2>
           Everything you need, nothing you don't
         </h2>
-        <p className="text-gray-400 text-lg md:text-2xl max-w-2xl">
+        <p className="text-gray-400 md:text-lg max-w-2xl">
           Powerful tools designed for modern event creators and attendees
         </p>
       </div>
@@ -60,18 +60,18 @@ export default function PlatformFeaturesSection() {
           return (
             <Card
               key={index}
-              className="bg-zinc-900 border-0 rounded-2xl py-8 px-10 flex flex-col gap-5"
+              className="bg-zinc-900 border-0 p-8 flex flex-col gap-5"
             >
               {/* Icon */}
-              <div className="rounded-2xl w-16 h-16 bg-zinc-800 flex items-center justify-center">
+              <div className="rounded-2xl size-12 bg-zinc-800 flex items-center justify-center">
                 <Icon className="w-8 h-8 text-white" />
               </div>
 
               {/* Title */}
-              <h3 className="text-white text-3xl font-base">{feature.title}</h3>
+              <h3 className="text-white text-2xl font-light">{feature.title}</h3>
 
               {/* Description */}
-              <p className="text-gray-400 text-2xl/8 font-light">
+              <p className="text-gray-400 text-xl/8 font-base">
                 {feature.description}
               </p>
             </Card>

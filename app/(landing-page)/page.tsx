@@ -13,10 +13,10 @@ export default async function HomePage() {
       <div className="bg-neutral-950 min-h-screen">
         <EventsSection />
       </div>
-      <div className="bg-black">
+      <div className="bg-black min-h-screen">
         <AboutUsSection />
       </div>
-      <div className="bg-neutral-950">
+      <div className="bg-neutral-950 min-h-screen">
         <FeaturesSection />
       </div>
       
