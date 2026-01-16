@@ -14,28 +14,28 @@ export default function CTASection() {
                     </div>
 
                     {/* Main Headline */}
-                    <h2 className="text-5xl md:text-6xl lg:text-7xl font-base text-white text-center leading-tight max-w-4xl">
+                    <h2 className="font-base text-white text-center">
                         Ready to create your next unforgettable event?
                     </h2>
 
                     {/* Subtitle */}
-                    <p className="text-white text-xl md:text-2xl font-base text-center max-w-3xl">
+                    <p className="text-white text-lg font-base text-center max-w-3xl">
                         Start for free. No credit card required. Create your first event in under 5 minutes.
                     </p>
 
                     {/* CTA Buttons */}
                     <div className="flex items-center gap-4 mt-4">
-                        <Button variant="outline" className="text-black bg-white font-base rounded-2xl p-9 text-xl">
+                        <Button className="text-black font-base p-8 text-lg">
                             Get Started Free
                             <ArrowRight className="w-5 h-5 mt-0.5" />
                         </Button>
-                        <Button variant="outline" className="text-white bg-transparent border border-white font-base rounded-2xl py-9 px-10 text-xl">
+                        <Button variant="outline" className="text-white font-base p-8 text-lg">
                             Schedule a Demo
                         </Button>
                     </div>
 
                     {/* Bottom Text */}
-                    <p className="text-gray-300 text-xl font-base mt-2">
+                    <p className="text-gray-300 text-lg font-base mt-2">
                         Free forever for events under 100 attendees
                     </p>
                 </div>

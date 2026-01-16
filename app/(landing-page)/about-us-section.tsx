@@ -26,12 +26,12 @@ export default function AboutUsSection() {
           </div>
 
           {/* Headline */}
-          <h2 className="text-5xl md:text-6xl/14 font-base w-2xl text-white">
+          <h2>
             Grow your events with powerful tools
           </h2>
 
           {/* Description */}
-          <p className="text-gray-400 text-2xl/9 w-fit">
+          <p className="text-gray-400 md:max-w-3xl text-lg">
             From intimate workshops to large-scale conferences, Portl gives you everything you need to create unforgettable experiences and build lasting communities.
           </p>
 
@@ -39,17 +39,20 @@ export default function AboutUsSection() {
           <ul className="flex flex-col gap-7 mt-2">
             {features.map((feature, index) => (
               <li key={index} className="flex items-center gap-3">
-                <div className="w-6 h-6 rounded-full border-2 border-white flex items-center justify-center shrink-0">
-                  <Check className="w-3 h-4 text-white font-bold" strokeWidth={5} />
+                <div className="size-4 rounded-full border-2 border-white flex items-center justify-center shrink-0">
+                  <Check className="w-2 h-3 text-white font-bold" strokeWidth={5} />
                 </div>
-                <span className="text-gray-300 text-2xl">{feature}</span>
+                <span className="text-gray-300 text-xl">{feature}</span>
               </li>
             ))}
           </ul>
 
           {/* CTA Button */}
-          <Button variant="outline" className="text-black bg-white font-base rounded-2xl text-xl py-9 px-10">
-            Start Your First Event
+          <Button className="py-8 w-2/6 mt-4">
+            <p className="font-light text-xl">
+              Start Your First Event
+            </p>
+
             <ArrowRight className="w-5 h-5" />
           </Button>
         </div>
@@ -71,7 +74,7 @@ export default function AboutUsSection() {
           </Card>
 
           {/* Tickets Sold Card */}
-          
+
           <Card className="bg-zinc-900 rounded-[20px] border border-neutral-600 py-8 px-8">
             <div className="flex flex-col gap-4">
               <div className="flex items-start justify-between">
