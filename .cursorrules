@@ -1,0 +1,11 @@
+## Coding Conventions
+
+### Server Actions
+- **Always use Server Actions** for server-side operations instead of API routes
+- Server Actions should be defined in `app/actions/` directory
+- Use `"use server"` directive at the top of action files
+
+### Form Handling
+- **Always use React Hook Form** with **Zod** for form validation and handling
+- Use Zod schemas for validation
+- Integrate React Hook Form with Server Actions for form submissions

@@ -1,0 +1,1 @@
+Check open terminals and fix the issues detected.
