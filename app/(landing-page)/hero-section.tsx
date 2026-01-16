@@ -42,11 +42,11 @@ export default function HeroSection() {
 
           {/* CTA Buttons */}
           <div className="flex items-center gap-3 mt-2">
-            <Button className="h-11 px-6">
+            <Button className='py-6 px-10'>
               Start Creating Events
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
-            <Button variant="outline" className="h-11 px-6">
+            <Button variant="outline" className='py-6 px-10'>
               Discover Events
             </Button>
           </div>
