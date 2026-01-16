@@ -56,41 +56,41 @@ export default function FeaturesSection() {
     <div id="features" className="w-full px-16 py-20">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
         {/* Left Section - Event Cards */}
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-4">
           {events.map((event, index) => (
-            <Card key={index} className="bg-neutral-900 border-zinc-700 rounded-2xl p-8 py-8 relative gap-2">
+            <Card key={index} className="bg-neutral-900 border-zinc-700 rounded-2xl p-8 relative gap-2">
               {/* Category Tag */}
               <div className={`${event.categoryColor} rounded-full px-4 py-1 w-fit mb-2`}>
-                <span className="text-white/60 text-md font-medium">{event.category}</span>
+                <span className="text-white/60">{event.category}</span>
               </div>
 
               {/* Heart Icon */}
-              <Button variant="outline" className="absolute top-6 right-6 text-white bg-zinc-800 rounded-full p-4">
-                <Heart className="w-6 h-6" strokeWidth={2} />
+              <Button variant="outline" className="absolute top-6 right-6 text-white size-8 bg-zinc-800 rounded-full p-4">
+                <Heart className="size-5" strokeWidth={2} />
               </Button>
 
               {/* Event Title */}
-              <h3 className="text-white text-3xl font-base mb-3 pr-12">{event.title}</h3>
+              <h3 className="text-white text-xl font-base mb-3">{event.title}</h3>
 
               {/* Date and Location */}
               <div className="flex items-center gap-2 text-gray-400 mb-4">
-                <span className="text-xl">{event.date}</span>
+                <span className="text-md">{event.date}</span>
                 <span>•</span>
-                <MapPin className="w-4 h-4" />
-                <span className="text-lg">{event.location}</span>
+                <MapPin className="size-4" />
+                <span className="text-md">{event.location}</span>
               </div>
 
               {/* Attendees and Price */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="flex -space-x-2">
-                    <div className="w-10 h-10 bg-white rounded-full border-2 border-zinc-800"></div>
-                    <div className="w-10 h-10 bg-white rounded-full border-2 border-zinc-800"></div>
-                    <div className="w-10 h-10 bg-white rounded-full border-2 border-zinc-800"></div>
+                    <div className="size-8 bg-white rounded-full border-2 border-zinc-800"></div>
+                    <div className="size-8 bg-white rounded-full border-2 border-zinc-800"></div>
+                    <div className="size-8 bg-white rounded-full border-2 border-zinc-800"></div>
                   </div>
-                  <span className="text-gray-400 text-lg">{event.attendees} attending</span>
+                  <span className="text-gray-400 text-md">{event.attendees} attending</span>
                 </div>
-                <div className="text-white font-base text-2xl">{event.price}</div>
+                <div className="text-white font-base text-xl">{event.price}</div>
               </div>
             </Card>
           ))}
@@ -104,12 +104,12 @@ export default function FeaturesSection() {
           </div>
 
           {/* Headline */}
-          <h1 className="text-5xl md:text-7xl/16 font-base text-white leading-tight">
+          <h2 className=" font-base text-white">
             Discover experiences that inspire you
-          </h1>
+          </h2>
 
           {/* Description */}
-          <p className="text-gray-400 font-light text-3xl/10 w-[99%] ">
+          <p className="text-gray-400 font-base text-lg w-5/6">
             Find events tailored to your interests, connect with like-minded people, and create memories that last a lifetime.
           </p>
 
@@ -119,12 +119,12 @@ export default function FeaturesSection() {
               const Icon = feature.icon
               return (
                 <div key={index} className="flex items-center gap-4">
-                  <div className="w-16 h-16 flex items-center justify-center bg-zinc-800 rounded-2xl mt-1">
-                    <Icon className="w-8 h-8 text-white" strokeWidth={1.5} />
+                  <div className="size-16 flex items-center justify-center bg-zinc-800 rounded-2xl mt-1">
+                    <Icon className="size-6 text-white" strokeWidth={1.5} />
                   </div>
                   <div className="flex flex-col gap-1">
-                    <h3 className="mt-2 text-white text-3xl/14 font-light">{feature.title}</h3>
-                    <p className="text-gray-400 text-2xl">{feature.description}</p>
+                    <h3 className="mt-2 text-white text-2xl/10 font-light">{feature.title}</h3>
+                    <p className="text-gray-400 text-xl">{feature.description}</p>
                   </div>
                 </div>
               )
@@ -132,7 +132,7 @@ export default function FeaturesSection() {
           </div>
 
           {/* CTA Button */}
-          <Button variant="outline" className="w-fit py-9 px-12 mt-4 text-xl font-base border rounded-2xl border-gray-600">
+          <Button variant="outline" className="w-fit py-9 px-12 mt-4 text-xl border-gray-600">
             Explore Events Near You
           </Button>
         </div>

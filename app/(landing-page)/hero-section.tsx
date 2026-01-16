@@ -55,31 +55,31 @@ export default function HeroSection() {
         </div>
 
         {/* Statistics Section */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 w-full max-w-5xl mt-12">
-          <Card className="rounded-2xl py-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 w-full max-w-5xl mt-12">
+          <Card className="rounded-2xl py-6 w-5/6">
             {/* Active Community Members */}
             <div className="flex flex-col items-center text-center gap-4">
-              <Users className="w-12 h-12 text-white" />
-              <div className="text-4xl font-light text-white">2.5M+</div>
-              <div className="text-xl text-gray-300 font-light">Active Community Members</div>
+              <Users className="size-10 text-white" />
+              <div className="text-3xl font-base text-white">2.5M+</div>
+              <p className="text-gray-300">Active Community Members</p>
             </div>
           </Card>
 
           {/* Events Hosted Monthly */}
-          <Card className="rounded-2xl py-8">
+          <Card className="rounded-2xl py-6 w-5/6">
             <div className="flex flex-col items-center text-center gap-4">
-              <Calendar className="w-12 h-12 text-white" />
-              <div className="text-4xl font-light text-white">50K+</div>
-              <div className="text-xl text-gray-300 font-light">Events Hosted Monthly</div>
+              <Calendar className="size-10 text-white" />
+              <div className="text-3xl font-base text-white">50K+</div>
+              <p className="text-gray-300">Events Hosted Monthly</p>
             </div>
           </Card>
 
           {/* Customer Satisfaction */}
-          <Card className="rounded-2xl py-8">
+          <Card className="rounded-2xl py-6 w-5/6">
             <div className="flex flex-col items-center text-center gap-4">
-              <TrendingUp className="w-12 h-12 text-white" />
-              <div className="text-4xl font-light text-white">98%</div>
-              <div className="text-xl text-gray-300 font-light">Customer Satisfaction</div>
+              <TrendingUp className="size-10 text-white" />
+              <div className="text-3xl font-base text-white">98%</div>
+              <p className="text-gray-300">Customer Satisfaction</p>
             </div>
           </Card>
         </div>
