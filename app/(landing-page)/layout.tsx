@@ -4,10 +4,10 @@ import Footer from '../../components/layout/footer'
 
 export default function LandingPageLayout({ children }: { children: React.ReactNode }) {
     return (
-        <>
+        <div className='dark'>
             <Navbar/>
             {children}
             <Footer />
-        </>
+        </div>
     )
 }

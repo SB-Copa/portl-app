@@ -37,41 +37,41 @@ export default function PlatformFeaturesSection() {
   ]
 
   return (
-    <div id="events-section" className="w-full flex flex-col items-center gap-4 px-6 py-25">
+    <div id="events-section" className="w-full flex flex-col items-center gap-4 px-6 py-16">
       {/* Platform Features Label */}
-      <div className="rounded-full bg-linear-to-tl from-black to-gray-900 px-6 py-2.5 border border-gray-600 flex items-center gap-2">
-        <span className="text-white text-lg">Platform Features</span>
+      <div className="rounded-full bg-card px-4 py-2 border border-border flex items-center gap-2">
+        <span className="text-foreground text-sm">Platform Features</span>
       </div>
 
       {/* Header Section */}
-      <div className="flex flex-col items-center gap-4 mt-3 max-w-6xl text-center">
-        <h2>
+      <div className="flex flex-col items-center gap-3 mt-2 max-w-4xl text-center">
+        <h2 className="text-foreground">
           Everything you need, nothing you don't
         </h2>
-        <p className="text-gray-400 md:text-lg max-w-2xl">
+        <p className="text-muted-foreground text-base max-w-2xl">
           Powerful tools designed for modern event creators and attendees
         </p>
       </div>
 
       {/* Feature Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-12 w-5/6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mt-8 max-w-6xl">
         {features.map((feature, index) => {
           const Icon = feature.icon
           return (
             <Card
               key={index}
-              className="bg-zinc-900 border-0 p-8 flex flex-col gap-5"
+              className="p-6 flex flex-col gap-4"
             >
               {/* Icon */}
-              <div className="rounded-2xl size-12 bg-zinc-800 flex items-center justify-center">
-                <Icon className="w-8 h-8 text-white" />
+              <div className="rounded-xl size-10 bg-muted flex items-center justify-center">
+                <Icon className="w-5 h-5 text-foreground" />
               </div>
 
               {/* Title */}
-              <h3 className="text-white text-2xl font-light">{feature.title}</h3>
+              <h4 className="text-foreground">{feature.title}</h4>
 
               {/* Description */}
-              <p className="text-gray-400 text-xl/8 font-base">
+              <p className="text-muted-foreground text-sm leading-relaxed">
                 {feature.description}
               </p>
             </Card>
