@@ -6,23 +6,22 @@ import ContactUsSection from './contact-us-section';
 
 export default async function HomePage() {
   return (
-    <div className="min-h-screen w-full bg-black flex flex-col">
-      <div className="flex-1 flex items-center justify-center py-28 min-h-screen">
+    <div className="min-h-screen w-full bg-background flex flex-col dark">
+      <div className="flex-1 flex items-center justify-center py-20 min-h-screen">
         <HeroSection />
       </div>
-      <div className="bg-neutral-950 min-h-screen">
+      <div className="bg-card min-h-screen">
         <EventsSection />
       </div>
-      <div className="bg-black min-h-screen">
+      <div className="bg-background min-h-screen">
         <AboutUsSection />
       </div>
-      <div className="bg-neutral-950 min-h-screen">
+      <div className="bg-card min-h-screen">
         <FeaturesSection />
       </div>
-      
+      <div className="bg-background">
         <ContactUsSection />
-      
-
+      </div>
     </div>
   );
 }
