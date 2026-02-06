@@ -1,4 +1,3 @@
-import React from 'react'
 import { Zap, Shield, BarChart3, MessageCircle, Smartphone, Sparkles } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 

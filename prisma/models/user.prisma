@@ -12,7 +12,8 @@ model User {
 
   accounts              Account[]
   sessions              Session[]
-  organizerApplications OrganizerApplication[]
+  tenants               Tenant[]
+  applicationNotes      ApplicationNote[]
 
   @@map("users")
 }

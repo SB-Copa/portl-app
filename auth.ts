@@ -79,7 +79,11 @@ export const config = {
     strategy: 'jwt', // Must use JWT for Credentials provider
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
+  // Simplified cookies - no wildcard domain needed for path-based routing
+  // Cookies work on single domain (localhost:3000 in dev, portl.com in prod)
+  // Only admin.portl.com is a subdomain, but admin uses same auth cookies
   trustHost: true,
+  useSecureCookies: process.env.NODE_ENV === 'production',
 } satisfies NextAuthConfig;
 
 export const { handlers, auth, signIn, signOut } = NextAuth(config);

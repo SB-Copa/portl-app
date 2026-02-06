@@ -42,6 +42,7 @@ export async function updateProfileAction(formData: FormData) {
     });
 
     revalidatePath('/[tenant]/profile');
+    revalidatePath('/account/settings');
     return { success: true };
   } catch (error) {
     console.error('Profile update error:', error);

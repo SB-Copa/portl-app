@@ -1,11 +1,27 @@
 model Tenant {
-  id        String   @id @default(cuid())
-  subdomain String   @unique
-  name      String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                    String       @id @default(cuid())
+  subdomain             String       @unique
+  name                  String
+  businessEmail         String
+  businessPhone         String
+  contactEmail          String?
+  contactPhone          String?
+  sameAsBusinessContact Boolean      @default(true)
+  status                TenantStatus @default(INACTIVE)
+  ownerId               String
+  createdAt             DateTime     @default(now())
+  updatedAt             DateTime     @updatedAt
 
-  organizerApplications OrganizerApplication[]
+  owner       User                  @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  application OrganizerApplication?
+  events      Event[]
 
+  @@index([ownerId])
   @@map("tenants")
+}
+
+enum TenantStatus {
+  INACTIVE
+  ACTIVE
+  SUSPENDED
 }

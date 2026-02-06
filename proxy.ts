@@ -1,23 +1,47 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { auth } from '@/auth'
 
 /**
  * Next.js 15 Proxy Function (replaces middleware)
- * 
+ *
+ * Simplified routing:
+ * - Admin subdomain (admin.domain.com) → rewrites to /admin routes
+ * - All other routes use path-based routing (no subdomain rewrites)
+ * - Tenant pages use /t/[tenant]/ path pattern
+ *
  * NOTE: This runs in Edge Runtime which doesn't support:
  * - Prisma (use Node.js runtime in pages/API routes instead)
  * - Full Node.js APIs
- * 
- * Authentication checks should be done at the page/layout level using Server Components
- * where you have access to Prisma and full Node.js runtime.
  */
-export function proxy(request: NextRequest) {
+export async function proxy(request: NextRequest) {
     const host = request.headers.get('host') || ''
     const pathname = request.nextUrl.pathname
 
     // Skip static files and API routes early
     if (pathname.startsWith('/_next') || pathname.startsWith('/api')) {
         return NextResponse.next()
+    }
+
+    // Redirect authenticated users away from auth pages
+    if (pathname.startsWith('/auth/')) {
+        try {
+            const session = await auth()
+            if (session?.user) {
+                // Authenticated user trying to access auth pages → redirect to dashboard
+                return NextResponse.redirect(new URL('/dashboard', request.url))
+            }
+        } catch {
+            // If auth() fails in Edge Runtime, check for auth cookie directly
+            // NextAuth JWT strategy uses 'authjs.session-token' cookie
+            const sessionCookie = request.cookies.get('authjs.session-token') ||
+                                 request.cookies.get('__Secure-authjs.session-token') ||
+                                 request.cookies.get('next-auth.session-token') ||
+                                 request.cookies.get('__Secure-next-auth.session-token')
+            if (sessionCookie) {
+                return NextResponse.redirect(new URL('/dashboard', request.url))
+            }
+        }
     }
 
     // /admin route → redirect to admin. subdomain
@@ -28,51 +52,19 @@ export function proxy(request: NextRequest) {
         adminUrl.pathname = pathname.replace(/^\/admin/, '') || '/'
         return NextResponse.redirect(adminUrl)
     }
-    
+
     // admin.domain.com → rewrite to /admin routes
     // Note: Authentication is handled in the /admin layout.tsx or page.tsx
     if (host.startsWith('admin.')) {
         return NextResponse.rewrite(new URL(`/admin${pathname}`, request.url))
     }
 
-    // Multi-tenant routing: /[tenant]/... → tenant.localhost:3000/...
-    // Extract tenant name from pathname (first segment after /)
-    const tenantMatch = pathname.match(/^\/([^\/]+)/)
-    if (tenantMatch && tenantMatch[1]) {
-        const potentialTenant = tenantMatch[1]
-        // Skip reserved paths (admin is already handled above)
-        const reservedPaths = ['_next', 'api', 'admin', 'auth']
-        
-        if (!reservedPaths.includes(potentialTenant) && !host.includes('.')) {
-            // We're on root domain with a tenant path → redirect to tenant subdomain
-            const tenantUrl = new URL(request.url)
-            tenantUrl.host = `${potentialTenant}.${host}`
-            // Remove the /[tenant] prefix from pathname
-            tenantUrl.pathname = pathname.replace(/^\/[^\/]+/, '') || '/'
-            return NextResponse.redirect(tenantUrl)
-        }
-    }
-
-    // *.domain.com (wildcard subdomains) → rewrite to /[tenant] routes
-    // Check if it's a subdomain (not www, not admin, not bare domain)
-    const hostname = host.split(':')[0] // Remove port
-    const subdomain = hostname.split('.')[0]
-    
-    // Check if we have a subdomain (e.g., tenant.localhost or tenant.example.com)
-    const isSubdomain = hostname.includes('.') && 
-                        subdomain && 
-                        subdomain !== 'www' && 
-                        subdomain !== 'admin' &&
-                        (hostname.includes('.localhost') || hostname.split('.').length > 2)
-    
-    if (isSubdomain) {
-        // Rewrite to /[tenant] dynamic route
-        // Tenant validation happens in the [tenant] layout.tsx
-        return NextResponse.rewrite(new URL(`/${subdomain}${pathname}`, request.url))
-    }
-
-    // domain.com/ → landing page (no rewrite needed, just serve /)
-    // domain.com/slug → your app routes
+    // All other routes: normal path-based routing
+    // - /t/[tenant]/* → public tenant pages
+    // - /dashboard/* → organizer dashboard
+    // - /account/* → user account
+    // - /auth/* → auth pages
+    // No rewrites needed - Next.js handles these directly
 
     return NextResponse.next()
 }

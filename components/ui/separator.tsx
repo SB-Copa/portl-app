@@ -1,4 +1,4 @@
-import * as React from "react"
+import type { ComponentProps } from "react"
 
 import { cn } from "@/lib/utils"
 
@@ -7,7 +7,7 @@ function Separator({
   orientation = "horizontal",
   decorative = true,
   ...props
-}: React.ComponentProps<"div"> & {
+}: ComponentProps<"div"> & {
   orientation?: "horizontal" | "vertical"
   decorative?: boolean
 }) {

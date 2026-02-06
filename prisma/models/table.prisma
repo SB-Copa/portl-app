@@ -1,0 +1,25 @@
+model Table {
+  id        String    @id @default(cuid())
+  eventId   String
+  label     String    // e.g., "A1", "B2"
+  capacity  Int
+  minSpend  Int?      // Optional minimum spend in PHP
+  notes     String?   @db.Text
+  mode      TableMode @default(EXCLUSIVE)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  event       Event        @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  seats       Seat[]
+  ticketTypes TicketType[] // TABLE and SEAT ticket types can reference this table
+
+  @@unique([eventId, label])
+  @@index([eventId])
+  @@index([mode])
+  @@map("tables")
+}
+
+enum TableMode {
+  EXCLUSIVE // Sold as whole table only
+  SHARED    // Seats can be sold individually
+}

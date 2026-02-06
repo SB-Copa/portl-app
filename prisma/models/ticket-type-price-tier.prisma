@@ -1,0 +1,25 @@
+model TicketTypePriceTier {
+  id              String            @id @default(cuid())
+  ticketTypeId    String
+  name            String            // e.g., "Early Bird", "Regular", "Door"
+  price           Int               // Price in PHP
+  strategy        PriceTierStrategy @default(TIME_WINDOW)
+  startsAt        DateTime?         // For TIME_WINDOW strategy
+  endsAt          DateTime?        // For TIME_WINDOW strategy
+  allocationTotal Int?              // For ALLOCATION strategy
+  allocationSold  Int               @default(0) // For ALLOCATION strategy
+  priority        Int               @default(0) // For tie-breaking if overlapping
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  ticketType TicketType @relation(fields: [ticketTypeId], references: [id], onDelete: Cascade)
+
+  @@index([ticketTypeId])
+  @@index([priority])
+  @@map("ticket_type_price_tiers")
+}
+
+enum PriceTierStrategy {
+  TIME_WINDOW  // Active based on startsAt/endsAt
+  ALLOCATION   // Active based on allocationTotal/allocationSold
+}

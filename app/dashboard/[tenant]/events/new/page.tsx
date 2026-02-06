@@ -1,0 +1,80 @@
+import { getCurrentUser } from '@/lib/auth';
+import { prisma } from '@/lib/prisma';
+import { redirect } from 'next/navigation';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { EventForm } from '@/components/dashboard/events/event-form';
+import { createEventForTenantAction } from '@/app/actions/tenant-events';
+import Link from 'next/link';
+import { ArrowLeft } from 'lucide-react';
+
+async function getTenant(userId: string, subdomain: string) {
+  const tenant = await prisma.tenant.findUnique({
+    where: { subdomain },
+    include: { application: true },
+  });
+
+  if (!tenant || tenant.ownerId !== userId) {
+    return null;
+  }
+
+  return tenant;
+}
+
+export default async function NewEventPage({
+  params,
+}: {
+  params: Promise<{ tenant: string }>;
+}) {
+  const user = await getCurrentUser();
+  const { tenant: subdomain } = await params;
+
+  if (!user) {
+    redirect(`/auth/signin?callbackUrl=/dashboard/${subdomain}/events/new`);
+  }
+
+  const tenant = await getTenant(user.id, subdomain);
+
+  if (!tenant) {
+    redirect('/dashboard');
+  }
+
+  const isApproved = tenant.application?.status === 'APPROVED';
+
+  if (!isApproved) {
+    redirect(`/dashboard/${subdomain}`);
+  }
+
+  async function handleSubmit(data: Parameters<typeof createEventForTenantAction>[1]) {
+    'use server';
+    return createEventForTenantAction(subdomain, data);
+  }
+
+  return (
+    <div className="container mx-auto px-6 py-8 max-w-3xl space-y-6">
+      <div className="flex items-center gap-4">
+        <Link
+          href={`/dashboard/${subdomain}/events`}
+          className="flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4 mr-1" />
+          Back to Events
+        </Link>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Create New Event</CardTitle>
+          <CardDescription>
+            Fill in the details below to create a new event for {tenant.name}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <EventForm
+            tenantSubdomain={subdomain}
+            onSubmit={handleSubmit}
+          />
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

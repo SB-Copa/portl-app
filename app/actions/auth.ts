@@ -1,6 +1,6 @@
 'use server';
 
-import { signIn } from '@/auth';
+import { signIn, signOut } from '@/auth';
 import bcrypt from 'bcryptjs';
 import { AuthError } from 'next-auth';
 import prisma from '@/prisma/client';
@@ -81,4 +81,8 @@ export async function signInAction(formData: FormData) {
     }
     throw error;
   }
+}
+
+export async function signOutAction() {
+  await signOut({ redirect: true, redirectTo: '/' });
 }
