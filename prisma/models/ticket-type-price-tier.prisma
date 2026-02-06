@@ -13,6 +13,8 @@ model TicketTypePriceTier {
   updatedAt       DateTime          @updatedAt
 
   ticketType TicketType @relation(fields: [ticketTypeId], references: [id], onDelete: Cascade)
+  cartItems  CartItem[]
+  orderItems OrderItem[]
 
   @@index([ticketTypeId])
   @@index([priority])

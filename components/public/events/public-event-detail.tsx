@@ -73,7 +73,7 @@ export function PublicEventDetail({ event, tenantSubdomain, tenantName }: Public
           {/* Tickets */}
           <div>
             <h2 className="text-xl font-semibold mb-4">Tickets</h2>
-            <TicketTypesDisplay ticketTypes={event.ticketTypes} />
+            <TicketTypesDisplay eventId={event.id} ticketTypes={event.ticketTypes} />
           </div>
         </div>
 

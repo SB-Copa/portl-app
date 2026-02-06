@@ -20,6 +20,9 @@ model TicketType {
   table      Table?               @relation(fields: [tableId], references: [id], onDelete: SetNull)
   priceTiers TicketTypePriceTier[]
   promotions PromotionTicketType[]
+  cartItems  CartItem[]
+  orderItems OrderItem[]
+  tickets    Ticket[]
 
   @@index([eventId])
   @@index([kind])

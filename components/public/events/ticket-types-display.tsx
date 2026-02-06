@@ -1,7 +1,7 @@
 import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Ticket } from 'lucide-react';
+import { AddToCartButton } from '@/components/cart';
 import type { TicketType, TicketTypePriceTier } from '@/prisma/generated/prisma/client';
 
 type TicketTypeWithPriceTiers = TicketType & {
@@ -9,6 +9,7 @@ type TicketTypeWithPriceTiers = TicketType & {
 };
 
 interface TicketTypesDisplayProps {
+  eventId: string;
   ticketTypes: TicketTypeWithPriceTiers[];
 }
 
@@ -18,7 +19,7 @@ const kindLabels: Record<string, string> = {
   SEAT: 'Seat',
 };
 
-export function TicketTypesDisplay({ ticketTypes }: TicketTypesDisplayProps) {
+export function TicketTypesDisplay({ eventId, ticketTypes }: TicketTypesDisplayProps) {
   if (ticketTypes.length === 0) {
     return (
       <Card className="border-dashed">
@@ -113,9 +114,15 @@ export function TicketTypesDisplay({ ticketTypes }: TicketTypesDisplayProps) {
                       </div>
                     )}
                   </div>
-                  <Button disabled={isSoldOut} variant={isSoldOut ? 'outline' : 'default'}>
-                    {isSoldOut ? 'Sold Out' : 'Get Tickets'}
-                  </Button>
+                  <AddToCartButton
+                    eventId={eventId}
+                    ticketTypeId={ticketType.id}
+                    ticketTypeName={ticketType.name}
+                    price={currentPrice}
+                    maxQuantity={ticketType.quantityTotal ? Math.min(10, ticketType.quantityTotal - ticketType.quantitySold) : 10}
+                    disabled={isSoldOut}
+                    disabledReason={isSoldOut ? 'Sold Out' : undefined}
+                  />
                 </div>
               </div>
             </CardContent>

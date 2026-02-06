@@ -1,0 +1,52 @@
+model Ticket {
+  id              String       @id @default(cuid())
+  ticketCode      String       @unique // Unique scannable code (TKT-XXXX-XXXX)
+  orderId         String
+  orderItemId     String
+  eventId         String
+  ticketTypeId    String
+  seatId          String?      // For SEAT tickets
+
+  // Ownership
+  ownerId         String       // Purchaser (from order)
+  holderId        String?      // Assigned attendee (optional, can be different user)
+
+  // Holder info (assigned attendee details)
+  holderFirstName String?
+  holderLastName  String?
+  holderEmail     String?
+  holderPhone     String?
+
+  status          TicketStatus @default(ACTIVE)
+  checkedInAt     DateTime?
+  transferredAt   DateTime?
+
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  order      Order      @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  orderItem  OrderItem  @relation(fields: [orderItemId], references: [id], onDelete: Restrict)
+  event      Event      @relation(fields: [eventId], references: [id], onDelete: Restrict)
+  ticketType TicketType @relation(fields: [ticketTypeId], references: [id], onDelete: Restrict)
+  seat       Seat?      @relation(fields: [seatId], references: [id], onDelete: SetNull)
+  owner      User       @relation("TicketOwner", fields: [ownerId], references: [id], onDelete: Restrict)
+  holder     User?      @relation("TicketHolder", fields: [holderId], references: [id], onDelete: SetNull)
+
+  @@index([orderId])
+  @@index([orderItemId])
+  @@index([eventId])
+  @@index([ticketTypeId])
+  @@index([ownerId])
+  @@index([holderId])
+  @@index([ticketCode])
+  @@index([status])
+  @@map("tickets")
+}
+
+enum TicketStatus {
+  ACTIVE       // Valid, can be used
+  CHECKED_IN   // Already scanned/used
+  TRANSFERRED  // Ownership transferred
+  CANCELLED    // Cancelled/refunded
+  EXPIRED      // Event has passed
+}

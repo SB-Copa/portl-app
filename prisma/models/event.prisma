@@ -17,6 +17,9 @@ model Event {
   tables      Table[]
   ticketTypes TicketType[]
   promotions  Promotion[]
+  cartItems   CartItem[]
+  orders      Order[]
+  tickets     Ticket[]
 
   @@index([tenantId])
   @@index([status])

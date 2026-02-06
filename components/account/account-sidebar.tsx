@@ -4,7 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { LogoutButton } from '@/components/layout/logout-button'
-import { Home, Ticket, Receipt, Settings, Building2, Plus } from 'lucide-react'
+import { Home, Ticket, Receipt, Settings, Building2, Plus, ArrowLeft } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Separator } from '@/components/ui/separator'
 
@@ -94,6 +94,20 @@ export default function AccountSidebar({
           </Link>
         )}
       </nav>
+
+      {/* Back to Home */}
+      <div className="p-4 border-t">
+        <Link
+          href="/"
+          className={cn(
+            "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
+            "hover:bg-accent hover:text-accent-foreground text-muted-foreground"
+          )}
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to Home
+        </Link>
+      </div>
 
       {/* User Info & Logout */}
       <div className="p-4 border-t">

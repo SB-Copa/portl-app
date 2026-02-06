@@ -15,6 +15,12 @@ model User {
   tenants               Tenant[]
   applicationNotes      ApplicationNote[]
 
+  // Cart and orders
+  cart                  Cart?
+  orders                Order[]
+  ownedTickets          Ticket[]  @relation("TicketOwner")
+  heldTickets           Ticket[]  @relation("TicketHolder")
+
   @@map("users")
 }
 

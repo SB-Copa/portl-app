@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { Geist } from 'next/font/google';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { SessionProvider } from '@/components/providers/session-provider';
+import { CartProvider, CartDrawer } from '@/components/cart';
 import { Toaster } from 'sonner';
 import './globals.css';
 
@@ -25,7 +26,10 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${geistSans.variable} antialiased`}>
         <SessionProvider>
-          {children}
+          <CartProvider>
+            {children}
+            <CartDrawer />
+          </CartProvider>
         </SessionProvider>
         <Toaster richColors position="top-right" />
         <SpeedInsights />

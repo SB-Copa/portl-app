@@ -17,6 +17,7 @@ model Promotion {
   event         Event                @relation(fields: [eventId], references: [id], onDelete: Cascade)
   voucherCodes  VoucherCode[]
   ticketTypes   PromotionTicketType[]
+  orders        Order[]
 
   @@index([eventId])
   @@index([validFrom, validUntil])
