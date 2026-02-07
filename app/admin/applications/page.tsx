@@ -37,7 +37,7 @@ export default async function ApplicationsPage() {
   const applications = result.data as Application[];
 
   return (
-    <div className="container mx-auto py-8 space-y-8">
+    <div className="container mx-auto space-y-8">
       <div>
         <h1 className="text-3xl font-bold">Organizer Applications</h1>
         <p className="mt-2">

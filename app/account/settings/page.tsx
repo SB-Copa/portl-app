@@ -15,6 +15,7 @@ async function getUserDetails(userId: string) {
             firstName: true,
             lastName: true,
             email: true,
+            image: true,
         },
     })
 }
@@ -37,6 +38,7 @@ export default async function SettingsPage() {
         firstName: userDetails.firstName || '',
         lastName: userDetails.lastName || '',
         email: userDetails.email,
+        imageUrl: userDetails.image || undefined,
     }
 
     return (

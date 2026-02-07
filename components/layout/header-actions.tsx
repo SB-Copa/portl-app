@@ -6,12 +6,17 @@ import { UserMenu } from './user-menu'
 import { CartButton } from '@/components/cart'
 
 async function getUserTenantCount(userId: string): Promise<number> {
-    return await prisma.tenant.count({
-        where: { ownerId: userId },
+    return await prisma.tenantMember.count({
+        where: { userId },
     })
 }
 
-export async function HeaderActions() {
+interface HeaderActionsProps {
+    /** When rendered on a tenant subdomain, set to the main domain URL (e.g. "http://lvh.me:3000") so auth/account/dashboard links navigate cross-domain. Empty string for main domain. */
+    mainDomainPrefix?: string
+}
+
+export async function HeaderActions({ mainDomainPrefix = '' }: HeaderActionsProps) {
     const session = await getSession()
     const user = session?.user ? await getCurrentUser() : null
     const isAuthenticated = !!user
@@ -27,14 +32,23 @@ export async function HeaderActions() {
                     userName={userName}
                     userEmail={userEmail}
                     hasTenants={hasTenants}
+                    mainDomainPrefix={mainDomainPrefix}
                 />
             ) : (
                 <>
                     <Button variant="ghost" size="sm" asChild>
-                        <Link href="/auth/signin">Sign In</Link>
+                        {mainDomainPrefix ? (
+                            <a href={`${mainDomainPrefix}/auth/signin`}>Sign In</a>
+                        ) : (
+                            <Link href="/auth/signin">Sign In</Link>
+                        )}
                     </Button>
                     <Button size="sm" asChild>
-                        <Link href="/auth/signup">Get Started</Link>
+                        {mainDomainPrefix ? (
+                            <a href={`${mainDomainPrefix}/auth/signup`}>Get Started</a>
+                        ) : (
+                            <Link href="/auth/signup">Get Started</Link>
+                        )}
                     </Button>
                 </>
             )}

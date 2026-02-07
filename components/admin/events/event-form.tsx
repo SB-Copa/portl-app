@@ -59,7 +59,7 @@ export function EventForm({ defaultValues, eventId, onSubmit }: EventFormProps) 
     } else if (result.data) {
       setMessage({ type: 'success', text: eventId ? 'Event updated successfully!' : 'Event created successfully!' });
       toast.success(eventId ? 'Event updated successfully!' : 'Event created successfully!');
-      router.push(`/admin/events/${result.data.id}`);
+      router.push(`/events/${result.data.id}`);
       router.refresh();
     }
   };
@@ -70,8 +70,8 @@ export function EventForm({ defaultValues, eventId, onSubmit }: EventFormProps) 
         <div
           className={`rounded-lg border p-4 ${
             message.type === 'success'
-              ? 'border-green-200 bg-green-50 text-green-800'
-              : 'border-red-200 bg-red-50 text-red-800'
+              ? 'border-green-500/20 bg-green-500/10 text-green-400'
+              : 'border-red-500/20 bg-red-500/10 text-red-400'
           }`}
         >
           <div className="flex items-center gap-3">
@@ -94,7 +94,7 @@ export function EventForm({ defaultValues, eventId, onSubmit }: EventFormProps) 
           className={errors.name ? 'border-red-500' : ''}
         />
         {errors.name && (
-          <p className="text-sm text-red-600">{errors.name.message}</p>
+          <p className="text-sm text-destructive">{errors.name.message}</p>
         )}
       </div>
 
@@ -108,7 +108,7 @@ export function EventForm({ defaultValues, eventId, onSubmit }: EventFormProps) 
           className={errors.description ? 'border-red-500' : ''}
         />
         {errors.description && (
-          <p className="text-sm text-red-600">{errors.description.message}</p>
+          <p className="text-sm text-destructive">{errors.description.message}</p>
         )}
       </div>
 
@@ -122,7 +122,7 @@ export function EventForm({ defaultValues, eventId, onSubmit }: EventFormProps) 
             className={errors.venueName ? 'border-red-500' : ''}
           />
           {errors.venueName && (
-            <p className="text-sm text-red-600">{errors.venueName.message}</p>
+            <p className="text-sm text-destructive">{errors.venueName.message}</p>
           )}
         </div>
 
@@ -135,7 +135,7 @@ export function EventForm({ defaultValues, eventId, onSubmit }: EventFormProps) 
             className={errors.venueAddress ? 'border-red-500' : ''}
           />
           {errors.venueAddress && (
-            <p className="text-sm text-red-600">{errors.venueAddress.message}</p>
+            <p className="text-sm text-destructive">{errors.venueAddress.message}</p>
           )}
         </div>
       </div>
@@ -151,7 +151,7 @@ export function EventForm({ defaultValues, eventId, onSubmit }: EventFormProps) 
             className={errors.startDate ? 'border-red-500' : ''}
           />
           {errors.startDate && (
-            <p className="text-sm text-red-600">{errors.startDate.message}</p>
+            <p className="text-sm text-destructive">{errors.startDate.message}</p>
           )}
         </div>
 
@@ -165,7 +165,7 @@ export function EventForm({ defaultValues, eventId, onSubmit }: EventFormProps) 
             className={errors.startTime ? 'border-red-500' : ''}
           />
           {errors.startTime && (
-            <p className="text-sm text-red-600">{errors.startTime.message}</p>
+            <p className="text-sm text-destructive">{errors.startTime.message}</p>
           )}
         </div>
       </div>
@@ -181,7 +181,7 @@ export function EventForm({ defaultValues, eventId, onSubmit }: EventFormProps) 
             className={errors.endDate ? 'border-red-500' : ''}
           />
           {errors.endDate && (
-            <p className="text-sm text-red-600">{errors.endDate.message}</p>
+            <p className="text-sm text-destructive">{errors.endDate.message}</p>
           )}
         </div>
 
@@ -195,7 +195,7 @@ export function EventForm({ defaultValues, eventId, onSubmit }: EventFormProps) 
             className={errors.endTime ? 'border-red-500' : ''}
           />
           {errors.endTime && (
-            <p className="text-sm text-red-600">{errors.endTime.message}</p>
+            <p className="text-sm text-destructive">{errors.endTime.message}</p>
           )}
         </div>
       </div>
@@ -217,7 +217,7 @@ export function EventForm({ defaultValues, eventId, onSubmit }: EventFormProps) 
           </SelectContent>
         </Select>
         {errors.status && (
-          <p className="text-sm text-red-600">{errors.status.message}</p>
+          <p className="text-sm text-destructive">{errors.status.message}</p>
         )}
       </div>
 

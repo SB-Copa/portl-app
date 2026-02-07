@@ -9,7 +9,8 @@ import { useSearchParams } from 'next/navigation';
 
 export default function SignInPage() {
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get('callbackUrl') || '/admin';
+  const callbackUrl = searchParams.get('callbackUrl') || '/account';
+  const message = searchParams.get('message');
   const [error, setError] = useState<string | null>(searchParams.get('error'));
   const [isLoading, setIsLoading] = useState(false);
 
@@ -41,6 +42,28 @@ export default function SignInPage() {
 
         {/* Card */}
         <div className="rounded-2xl border p-8 shadow-lg">
+          {/* Success Message */}
+          {message && (
+            <div className="mb-6 rounded-lg border border-green-500/30 bg-green-500/10 p-4 text-sm text-green-200">
+              <div className="flex items-start gap-3">
+                <svg
+                  className="h-5 w-5 flex-shrink-0"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+                <div>{message}</div>
+              </div>
+            </div>
+          )}
+
           {/* Error Message */}
           {error && (
             <div className="mb-6 rounded-lg border p-4 text-sm">
@@ -81,9 +104,17 @@ export default function SignInPage() {
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="password" className="text-sm font-medium">
-                Password
-              </label>
+              <div className="flex items-center justify-between">
+                <label htmlFor="password" className="text-sm font-medium">
+                  Password
+                </label>
+                <Link
+                  href="/auth/forgot-password"
+                  className="text-xs font-medium transition-colors"
+                >
+                  Forgot password?
+                </Link>
+              </div>
               <Input
                 id="password"
                 name="password"
@@ -116,17 +147,6 @@ export default function SignInPage() {
           </div>
         </div>
 
-        {/* Terms */}
-        <p className="mt-6 text-center text-xs">
-          By continuing, you agree to our{' '}
-          <Link href="/terms" className="underline">
-            Terms of Service
-          </Link>{' '}
-          and{' '}
-          <Link href="/privacy" className="underline">
-            Privacy Policy
-          </Link>
-        </p>
       </div>
     </div>
   );

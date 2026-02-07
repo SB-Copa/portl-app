@@ -3,12 +3,61 @@
 import { requireAuth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
-import type { SaveAttendeesData, CompleteCheckoutData, VoucherCodeApplyData } from '@/lib/validations/checkout';
+import type { SaveAttendeesData, CompleteCheckoutData, VoucherCodeApplyData, CreatePaymentSessionData } from '@/lib/validations/checkout';
 import type { Order, OrderItem, Ticket, Event, TicketType, Tenant, Promotion, VoucherCode, Prisma } from '@/prisma/generated/prisma/client';
 import { nanoid } from 'nanoid';
+import { createCheckoutSession, retrieveCheckoutSession } from '@/lib/paymongo';
+import { tenantUrl, mainUrl } from '@/lib/url';
+import { sendOrderConfirmationEmail } from '@/lib/email';
 
 // Order expiration time in minutes
 const ORDER_EXPIRATION_MINUTES = 15;
+
+/**
+ * Fire-and-forget order confirmation email
+ */
+async function sendConfirmationEmailForOrder(orderId: string): Promise<void> {
+  try {
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: {
+        event: true,
+        user: { select: { email: true } },
+        tickets: true,
+      },
+    });
+
+    if (!order) return;
+
+    const email = order.contactEmail || order.user.email;
+    if (!email) return;
+
+    const eventDate = new Date(order.event.startDate).toLocaleDateString('en-US', {
+      weekday: 'long',
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric',
+    });
+
+    const total = order.total === 0
+      ? 'FREE'
+      : new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(order.total / 100);
+
+    await sendOrderConfirmationEmail({
+      to: email,
+      orderNumber: order.orderNumber,
+      eventName: order.event.name,
+      eventDate,
+      venueName: order.event.venueName,
+      ticketCount: order.tickets.length,
+      total,
+      ticketsUrl: mainUrl('/account/tickets'),
+    });
+  } catch (error) {
+    // Fire-and-forget: don't fail the order if email fails
+    console.error('Failed to send order confirmation email:', error);
+  }
+}
 
 // Types for order with relations
 export type OrderItemWithRelations = OrderItem & {
@@ -93,6 +142,9 @@ export async function initializeCheckoutAction(
     if (!tenant) {
       return { error: 'Tenant not found' };
     }
+
+    // Clean up any expired pending orders to release inventory
+    await cleanupExpiredOrders(userId, tenant.id);
 
     // Get cart items for this tenant
     const cart = await prisma.cart.findUnique({
@@ -542,14 +594,12 @@ export async function saveAttendeesAction(
       return { error: `Expected ${totalTickets} attendees, got ${attendees.length}` };
     }
 
-    // Store attendee info in order metadata for now
+    // Store attendee info in order metadata
     // This will be transferred to tickets when order is completed
     const updatedOrder = await prisma.order.update({
       where: { id: orderId },
       data: {
-        // Store attendees temporarily - we'll create tickets with this info on completion
-        // Using a metadata approach since we don't have tickets yet
-        updatedAt: new Date(), // Touch the record
+        metadata: { attendees },
       },
       include: {
         event: true,
@@ -745,6 +795,485 @@ export async function completeCheckoutAction(
   }
 }
 
+// Payment session expiration time - 30 minutes to account for PayMongo checkout
+const PAYMENT_SESSION_EXPIRATION_MINUTES = 30;
+
+/**
+ * Cancel an expired pending order and release inventory (internal, no auth check).
+ * Used to clean up abandoned orders so tickets become available again.
+ */
+async function cancelExpiredOrder(orderId: string): Promise<void> {
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    include: { items: true },
+  });
+
+  if (!order || order.status !== 'PENDING') return;
+
+  await prisma.$transaction(async (tx) => {
+    for (const item of order.items) {
+      await tx.ticketType.update({
+        where: { id: item.ticketTypeId },
+        data: { quantitySold: { decrement: item.quantity } },
+      });
+
+      if (item.priceTierId) {
+        await tx.ticketTypePriceTier.update({
+          where: { id: item.priceTierId },
+          data: { allocationSold: { decrement: item.quantity } },
+        });
+      }
+    }
+
+    await tx.order.update({
+      where: { id: orderId },
+      data: {
+        status: 'CANCELLED',
+        cancelledAt: new Date(),
+        expiresAt: null,
+      },
+    });
+
+    await tx.ticket.updateMany({
+      where: { orderId },
+      data: { status: 'CANCELLED' },
+    });
+  });
+}
+
+/**
+ * Find and cancel all expired PENDING orders for a user+tenant to release inventory.
+ */
+async function cleanupExpiredOrders(userId: string, tenantId: string): Promise<void> {
+  const expiredOrders = await prisma.order.findMany({
+    where: {
+      userId,
+      tenantId,
+      status: 'PENDING',
+      expiresAt: { lt: new Date() },
+    },
+    select: { id: true },
+  });
+
+  for (const order of expiredOrders) {
+    try {
+      await cancelExpiredOrder(order.id);
+    } catch (error) {
+      console.error(`Failed to cancel expired order ${order.id}:`, error);
+    }
+  }
+}
+
+/**
+ * Confirm a free order (total = 0) without payment gateway
+ */
+export async function confirmFreeOrderAction(
+  data: CreatePaymentSessionData
+): Promise<{ data: { orderId: string } } | { error: string }> {
+  try {
+    const session = await requireAuth();
+    const userId = session.user.id;
+
+    const { orderId, contactEmail, contactPhone, attendees } = data;
+
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: {
+        items: {
+          include: { ticketType: true },
+        },
+        voucherCode: true,
+      },
+    });
+
+    if (!order) return { error: 'Order not found' };
+    if (order.userId !== userId) return { error: 'Unauthorized' };
+    if (order.status !== 'PENDING') return { error: 'Order is not pending' };
+    if (order.total !== 0) return { error: 'Order is not free' };
+
+    if (order.expiresAt && order.expiresAt < new Date()) {
+      await cancelOrderAction(orderId);
+      return { error: 'Order has expired. Please start a new checkout.' };
+    }
+
+    await prisma.$transaction(async (tx) => {
+      // Create a zero-amount transaction record
+      await tx.transaction.create({
+        data: {
+          orderId,
+          type: 'PAYMENT',
+          amount: 0,
+          status: 'COMPLETED',
+          provider: 'free',
+          processedAt: new Date(),
+        },
+      });
+
+      // Update order status
+      await tx.order.update({
+        where: { id: orderId },
+        data: {
+          status: 'CONFIRMED',
+          contactEmail,
+          contactPhone: contactPhone || null,
+          metadata: { attendees },
+          completedAt: new Date(),
+          expiresAt: null,
+        },
+      });
+
+      // Increment voucher redemption count if used
+      if (order.voucherCodeId) {
+        await tx.voucherCode.update({
+          where: { id: order.voucherCodeId },
+          data: { redeemedCount: { increment: 1 } },
+        });
+      }
+
+      // Generate tickets
+      let attendeeIndex = 0;
+      for (const item of order.items) {
+        for (let i = 0; i < item.quantity; i++) {
+          const attendee = attendees?.[attendeeIndex];
+          await tx.ticket.create({
+            data: {
+              ticketCode: generateTicketCode(),
+              orderId,
+              orderItemId: item.id,
+              eventId: order.eventId,
+              ticketTypeId: item.ticketTypeId,
+              seatId: item.seatId,
+              ownerId: userId,
+              holderFirstName: attendee?.firstName || null,
+              holderLastName: attendee?.lastName || null,
+              holderEmail: attendee?.email || null,
+              holderPhone: attendee?.phone || null,
+              status: 'ACTIVE',
+            },
+          });
+          attendeeIndex++;
+        }
+      }
+    });
+
+    revalidatePath('/account/orders');
+    revalidatePath('/account/tickets');
+
+    // Send confirmation email (fire-and-forget)
+    sendConfirmationEmailForOrder(orderId);
+
+    return { data: { orderId } };
+  } catch (error) {
+    console.error('Error confirming free order:', error);
+    if (error instanceof Error && error.message === 'Unauthorized') {
+      return { error: 'Please sign in to complete checkout' };
+    }
+    return { error: 'Failed to confirm order' };
+  }
+}
+
+/**
+ * Create PayMongo checkout session for order payment
+ */
+export async function createPaymentSessionAction(
+  data: CreatePaymentSessionData
+): Promise<{ data: { checkoutUrl: string } } | { error: string }> {
+  try {
+    const session = await requireAuth();
+    const userId = session.user.id;
+
+    const { orderId, contactEmail, contactPhone, attendees } = data;
+
+    // Find order with relations
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: {
+        event: true,
+        tenant: true,
+        items: {
+          include: {
+            ticketType: true,
+          },
+        },
+        voucherCode: true,
+      },
+    });
+
+    if (!order) {
+      return { error: 'Order not found' };
+    }
+
+    if (order.userId !== userId) {
+      return { error: 'Unauthorized' };
+    }
+
+    if (order.status !== 'PENDING') {
+      return { error: 'Order is not pending' };
+    }
+
+    // Check if order has expired
+    if (order.expiresAt && order.expiresAt < new Date()) {
+      await cancelOrderAction(orderId);
+      return { error: 'Order has expired. Please start a new checkout.' };
+    }
+
+    // Determine tenant URL for PayMongo redirect URLs
+    const subdomain = order.tenant.subdomain;
+
+    // Save attendees + contact info to order metadata and extend expiration
+    await prisma.order.update({
+      where: { id: orderId },
+      data: {
+        contactEmail,
+        contactPhone: contactPhone || null,
+        metadata: { attendees },
+        expiresAt: new Date(Date.now() + PAYMENT_SESSION_EXPIRATION_MINUTES * 60 * 1000),
+      },
+    });
+
+    // Create PayMongo checkout session
+    // PayMongo expects amounts in centavos (100 centavos = 1 PHP)
+    const lineItems = order.items.map((item) => ({
+      amount: item.unitPrice * item.quantity * 100,
+      currency: 'PHP',
+      name: `${item.ticketType.name} x${item.quantity}`,
+      quantity: 1,
+      description: `${order.event.name} - ${item.ticketType.name}`,
+    }));
+
+    // If there's a discount, add it as a negative line item description
+    // PayMongo doesn't support negative amounts, so we adjust the total
+    // by using the order total directly if there's a discount
+    const hasDiscount = order.discountAmount > 0;
+    const finalLineItems = hasDiscount
+      ? [
+          {
+            amount: order.total * 100,
+            currency: 'PHP',
+            name: `Order ${order.orderNumber}`,
+            quantity: 1,
+            description: `${order.event.name} (discount applied)`,
+          },
+        ]
+      : lineItems;
+
+    const checkoutResult = await createCheckoutSession({
+      lineItems: finalLineItems,
+      paymentMethodTypes: ['qrph', 'gcash', 'paymaya'],
+      description: `Order ${order.orderNumber} - ${order.event.name}`,
+      referenceNumber: order.orderNumber,
+      successUrl: tenantUrl(subdomain, `/checkout/success/${orderId}`),
+      cancelUrl: tenantUrl(subdomain, '/checkout?resume=true'),
+      sendEmailReceipt: true,
+      metadata: {
+        orderId: order.id,
+        orderNumber: order.orderNumber,
+      },
+      billing: {
+        email: contactEmail,
+        phone: contactPhone || undefined,
+      },
+    });
+
+    // Create a PENDING transaction record
+    await prisma.transaction.create({
+      data: {
+        orderId,
+        type: 'PAYMENT',
+        amount: order.total,
+        status: 'PENDING',
+        provider: 'paymongo',
+        providerTxnId: checkoutResult.checkoutSessionId,
+      },
+    });
+
+    // Store checkout session ID on the order
+    await prisma.order.update({
+      where: { id: orderId },
+      data: {
+        paymentSessionId: checkoutResult.checkoutSessionId,
+      },
+    });
+
+    return { data: { checkoutUrl: checkoutResult.checkoutUrl } };
+  } catch (error) {
+    console.error('Error creating payment session:', error);
+    if (error instanceof Error && error.message === 'Unauthorized') {
+      return { error: 'Please sign in to complete payment' };
+    }
+    return { error: 'Failed to create payment session. Please try again.' };
+  }
+}
+
+/**
+ * Confirm order after payment (called from webhook or success page fallback).
+ * This is an internal function, not a server action.
+ */
+export async function confirmOrderFromPayment(
+  orderId: string,
+  paymentData: {
+    paymentId: string;
+    amount: number;
+    status: string;
+    paidAt?: number;
+  }
+): Promise<void> {
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    include: {
+      items: {
+        include: {
+          ticketType: true,
+        },
+      },
+      voucherCode: true,
+    },
+  });
+
+  if (!order || order.status !== 'PENDING') {
+    // Already confirmed or cancelled - idempotent
+    return;
+  }
+
+  // Read attendees from order metadata
+  const metadata = order.metadata as { attendees?: Array<{ firstName: string; lastName: string; email: string; phone?: string | null }> } | null;
+  const attendees = metadata?.attendees || [];
+
+  await prisma.$transaction(async (tx) => {
+    // Update transaction record
+    await tx.transaction.updateMany({
+      where: {
+        orderId,
+        provider: 'paymongo',
+        status: 'PENDING',
+      },
+      data: {
+        status: 'COMPLETED',
+        providerTxnId: paymentData.paymentId,
+        providerStatus: paymentData.status,
+        metadata: paymentData as unknown as Prisma.InputJsonValue,
+        processedAt: paymentData.paidAt
+          ? new Date(paymentData.paidAt * 1000)
+          : new Date(),
+      },
+    });
+
+    // Update order status
+    await tx.order.update({
+      where: { id: orderId },
+      data: {
+        status: 'CONFIRMED',
+        completedAt: new Date(),
+        expiresAt: null,
+      },
+    });
+
+    // Increment voucher redemption count if used
+    if (order.voucherCodeId) {
+      await tx.voucherCode.update({
+        where: { id: order.voucherCodeId },
+        data: {
+          redeemedCount: { increment: 1 },
+        },
+      });
+    }
+
+    // Generate tickets
+    let attendeeIndex = 0;
+    for (const item of order.items) {
+      for (let i = 0; i < item.quantity; i++) {
+        const attendee = attendees[attendeeIndex];
+
+        await tx.ticket.create({
+          data: {
+            ticketCode: generateTicketCode(),
+            orderId,
+            orderItemId: item.id,
+            eventId: order.eventId,
+            ticketTypeId: item.ticketTypeId,
+            seatId: item.seatId,
+            ownerId: order.userId,
+            holderFirstName: attendee?.firstName || null,
+            holderLastName: attendee?.lastName || null,
+            holderEmail: attendee?.email || null,
+            holderPhone: attendee?.phone || null,
+            status: 'ACTIVE',
+          },
+        });
+
+        attendeeIndex++;
+      }
+    }
+  });
+
+  revalidatePath('/account/orders');
+  revalidatePath('/account/tickets');
+
+  // Send confirmation email (fire-and-forget)
+  sendConfirmationEmailForOrder(orderId);
+}
+
+/**
+ * Verify payment and confirm order (called from success page as fallback)
+ */
+export async function verifyAndConfirmPaymentAction(
+  orderId: string
+): Promise<{ data: { status: 'confirmed' | 'pending' | 'failed' } } | { error: string }> {
+  try {
+    const session = await requireAuth();
+    const userId = session.user.id;
+
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+    });
+
+    if (!order) {
+      return { error: 'Order not found' };
+    }
+
+    if (order.userId !== userId) {
+      return { error: 'Unauthorized' };
+    }
+
+    // Already confirmed
+    if (order.status === 'CONFIRMED') {
+      return { data: { status: 'confirmed' } };
+    }
+
+    if (order.status !== 'PENDING' || !order.paymentSessionId) {
+      return { data: { status: 'failed' } };
+    }
+
+    // Retrieve checkout session from PayMongo to check payment status
+    const checkoutSession = await retrieveCheckoutSession(order.paymentSessionId);
+
+    const paidPayment = checkoutSession.payments.find(
+      (p) => p.status === 'paid'
+    );
+
+    if (paidPayment) {
+      // Payment is confirmed - process the order
+      await confirmOrderFromPayment(orderId, {
+        paymentId: paidPayment.id,
+        amount: paidPayment.amount,
+        status: paidPayment.status,
+        paidAt: paidPayment.paidAt,
+      });
+
+      return { data: { status: 'confirmed' } };
+    }
+
+    // Payment not yet completed
+    return { data: { status: 'pending' } };
+  } catch (error) {
+    console.error('Error verifying payment:', error);
+    if (error instanceof Error && error.message === 'Unauthorized') {
+      return { error: 'Please sign in to verify payment' };
+    }
+    return { error: 'Failed to verify payment status' };
+  }
+}
+
 /**
  * Cancel pending order and release inventory
  */
@@ -843,6 +1372,9 @@ export async function getPendingOrderForTenantAction(
     if (!tenant) {
       return { error: 'Tenant not found' };
     }
+
+    // Clean up any expired pending orders to release inventory
+    await cleanupExpiredOrders(userId, tenant.id);
 
     // Find existing pending order for this user and tenant
     const order = await prisma.order.findFirst({

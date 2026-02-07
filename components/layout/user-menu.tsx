@@ -10,17 +10,29 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Button } from '@/components/ui/button'
-import { User, Ticket, Settings, Building2, Plus, LogOut, ChevronDown } from 'lucide-react'
+import { User, Ticket, Settings, Plus, LogOut, ChevronDown, LayoutDashboard } from 'lucide-react'
 import { signOut } from 'next-auth/react'
 
 type UserMenuProps = {
   userName: string | null
   userEmail: string | null
   hasTenants: boolean
+  /** When on a tenant subdomain, prepend this to main-domain links (e.g. "http://lvh.me:3000"). Empty string on main domain. */
+  mainDomainPrefix?: string
 }
 
-export function UserMenu({ userName, userEmail, hasTenants }: UserMenuProps) {
+export function UserMenu({ userName, userEmail, hasTenants, mainDomainPrefix = '' }: UserMenuProps) {
   const displayName = userName || userEmail || 'Account'
+  const p = mainDomainPrefix // shorthand
+
+  // On tenant subdomains, use <a> for cross-domain navigation; on main domain, use <Link>
+  const MenuLink = p
+    ? ({ href, children, className }: { href: string; children: React.ReactNode; className?: string }) => (
+        <a href={`${p}${href}`} className={className}>{children}</a>
+      )
+    : ({ href, children, className }: { href: string; children: React.ReactNode; className?: string }) => (
+        <Link href={href} className={className}>{children}</Link>
+      )
 
   return (
     <DropdownMenu>
@@ -44,43 +56,43 @@ export function UserMenu({ userName, userEmail, hasTenants }: UserMenuProps) {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
-          <Link href="/account" className="cursor-pointer">
+          <MenuLink href="/account" className="cursor-pointer">
             <User className="mr-2 h-4 w-4" />
             My Account
-          </Link>
+          </MenuLink>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <Link href="/account/tickets" className="cursor-pointer">
+          <MenuLink href="/account/tickets" className="cursor-pointer">
             <Ticket className="mr-2 h-4 w-4" />
             My Tickets
-          </Link>
+          </MenuLink>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <Link href="/account/settings" className="cursor-pointer">
+          <MenuLink href="/account/settings" className="cursor-pointer">
             <Settings className="mr-2 h-4 w-4" />
             Settings
-          </Link>
+          </MenuLink>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         {hasTenants ? (
           <DropdownMenuItem asChild>
-            <Link href="/dashboard" className="cursor-pointer">
-              <Building2 className="mr-2 h-4 w-4" />
+            <MenuLink href="/dashboard" className="cursor-pointer">
+              <LayoutDashboard className="mr-2 h-4 w-4" />
               Organizer Dashboard
-            </Link>
+            </MenuLink>
           </DropdownMenuItem>
         ) : (
           <DropdownMenuItem asChild>
-            <Link href="/organizer/register" className="cursor-pointer">
+            <MenuLink href="/organizer/register" className="cursor-pointer">
               <Plus className="mr-2 h-4 w-4" />
               Become an Organizer
-            </Link>
+            </MenuLink>
           </DropdownMenuItem>
         )}
         <DropdownMenuSeparator />
         <DropdownMenuItem
           className="cursor-pointer text-destructive focus:text-destructive"
-          onClick={() => signOut({ callbackUrl: '/' })}
+          onClick={() => signOut({ callbackUrl: p ? `${p}/` : '/' })}
         >
           <LogOut className="mr-2 h-4 w-4" />
           Sign Out

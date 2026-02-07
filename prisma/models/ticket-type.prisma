@@ -12,7 +12,9 @@ model TicketType {
   
   // For TABLE and SEAT kinds, link to specific table
   tableId       String?
-  
+
+  imageUrl      String?
+
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
 

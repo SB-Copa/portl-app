@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
+import { FileUpload } from '@/components/ui/file-upload';
 import { Plus, Trash2 } from 'lucide-react';
 
 export interface PastEvent {
@@ -50,16 +51,21 @@ export function PastEventsForm({ initialData, onChange }: PastEventsFormProps) {
     onChange(newEvents);
   };
 
-  const addPhoto = (eventIndex: number, photoUrl: string) => {
+  const handlePhotoUploaded = (eventIndex: number, url: string) => {
     const event = events[eventIndex];
     if (event.photos.length >= 10) return;
-    const newPhotos = [...event.photos, photoUrl];
+    const newPhotos = [...event.photos, url];
     updateEvent(eventIndex, 'photos', newPhotos);
   };
 
-  const removePhoto = (eventIndex: number, photoIndex: number) => {
+  const handlePhotoReplaced = (eventIndex: number, photoIndex: number, url: string | undefined) => {
     const event = events[eventIndex];
-    const newPhotos = event.photos.filter((_, i) => i !== photoIndex);
+    const newPhotos = [...event.photos];
+    if (url) {
+      newPhotos[photoIndex] = url;
+    } else {
+      newPhotos.splice(photoIndex, 1);
+    }
     updateEvent(eventIndex, 'photos', newPhotos);
   };
 
@@ -116,38 +122,29 @@ export function PastEventsForm({ initialData, onChange }: PastEventsFormProps) {
 
             <div className="space-y-2">
               <Label>Event Photos (up to 10)</Label>
-              <div className="space-y-2">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {event.photos.map((photo, photoIndex) => (
-                  <div key={photoIndex} className="flex items-center gap-2">
-                    <Input
-                      placeholder="Photo URL (Vercel Blob placeholder)"
-                      value={photo}
-                      onChange={(e) => {
-                        const newPhotos = [...event.photos];
-                        newPhotos[photoIndex] = e.target.value;
-                        updateEvent(eventIndex, 'photos', newPhotos);
-                      }}
-                    />
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removePhoto(eventIndex, photoIndex)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  <FileUpload
+                    key={`${eventIndex}-photo-${photoIndex}`}
+                    value={photo}
+                    onChange={(url) => handlePhotoReplaced(eventIndex, photoIndex, url)}
+                    folder={`portfolio/past-events/${eventIndex}`}
+                  />
                 ))}
                 {event.photos.length < 10 && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => addPhoto(eventIndex, '')}
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Photo
-                  </Button>
+                  <FileUpload
+                    key={`${eventIndex}-photo-new-${event.photos.length}`}
+                    value={undefined}
+                    onChange={(url) => {
+                      if (url) handlePhotoUploaded(eventIndex, url);
+                    }}
+                    folder={`portfolio/past-events/${eventIndex}`}
+                  />
                 )}
               </div>
+              <p className="text-xs text-muted-foreground">
+                {event.photos.length}/10 photos uploaded
+              </p>
             </div>
 
             <div className="space-y-2">

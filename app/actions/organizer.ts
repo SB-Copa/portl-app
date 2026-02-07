@@ -37,7 +37,7 @@ export async function getApplicationAction(tenantId: string) {
       return { error: 'Tenant ID required' };
     }
 
-    // Verify user owns the tenant
+    // Verify user is a member of the tenant
     const tenant = await prisma.tenant.findUnique({
       where: { id: tenantId },
     });
@@ -46,7 +46,13 @@ export async function getApplicationAction(tenantId: string) {
       return { error: 'Tenant not found' };
     }
 
-    if (tenant.ownerId !== user.id) {
+    const membership = await prisma.tenantMember.findUnique({
+      where: {
+        userId_tenantId: { userId: user.id, tenantId },
+      },
+    });
+
+    if (!membership || membership.role !== 'OWNER') {
       return { error: 'Unauthorized' };
     }
 
@@ -115,7 +121,7 @@ export async function registerOrganizerAction(data: {
       return { error: 'This subdomain is already taken. Please choose another one.' };
     }
 
-    // Create tenant and application in a transaction
+    // Create tenant, application, and owner membership in a transaction
     const result = await prisma.$transaction(async (tx) => {
       const tenant = await tx.tenant.create({
         data: {
@@ -136,6 +142,14 @@ export async function registerOrganizerAction(data: {
           tenantId: tenant.id,
           status: 'NOT_STARTED',
           currentStep: 1,
+        },
+      });
+
+      await tx.tenantMember.create({
+        data: {
+          userId: user.id,
+          tenantId: tenant.id,
+          role: 'OWNER',
         },
       });
 
@@ -165,17 +179,22 @@ export async function saveApplicationAction(
       return { error: 'Tenant ID required' };
     }
 
-    // Verify user owns the tenant
+    // Verify user is OWNER of the tenant
     const tenant = await prisma.tenant.findUnique({
       where: { id: tenantId },
-      include: { owner: true },
     });
 
     if (!tenant) {
       return { error: 'Tenant not found' };
     }
 
-    if (tenant.ownerId !== user.id) {
+    const membership = await prisma.tenantMember.findUnique({
+      where: {
+        userId_tenantId: { userId: user.id, tenantId },
+      },
+    });
+
+    if (!membership || membership.role !== 'OWNER') {
       return { error: 'Unauthorized' };
     }
 

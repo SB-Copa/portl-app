@@ -12,6 +12,8 @@ Portl is a multi-tenant event platform built with Next.js 16, allowing organizat
 - **Database**: PostgreSQL via Prisma 7.2.0 with PostgreSQL adapter
 - **Authentication**: NextAuth v5 (beta.30) with JWT sessions
 - **Styling**: Tailwind CSS 4 with shadcn/ui components
+- **Payments**: PayMongo Checkout Sessions (PHP currency, centavo amounts)
+- **QR Codes**: react-qr-code (SVG-based)
 - **Storage**: Upstash Redis for tenant data caching
 - **Package Manager**: pnpm 10.12.4
 
@@ -35,53 +37,58 @@ pnpm prisma:migrate         # Create and apply migration
 
 ### Multi-Tenancy System
 
-The application uses **path-based multi-tenancy** with a simple `/t/[tenant]` prefix:
+The application uses **subdomain-based multi-tenancy** where each tenant gets its own subdomain:
 
-- **Main domain** (`localhost:3000` / `portl.com`): Landing page, auth, account, dashboard
-- **Admin subdomain** (`admin.localhost:3000`): Admin panel (only subdomain used)
-- **Tenant pages** (`localhost:3000/t/tenant-name`): Public tenant pages under `/t/` prefix
+- **Main domain** (`lvh.me:3000` / `portl.com`): Landing page, auth, account, dashboard
+- **Admin subdomain** (`admin.lvh.me:3000`): Admin panel
+- **Tenant subdomains** (`acme.lvh.me:3000` / `acme.portl.com`): Public tenant pages
+
+The `proxy.ts` rewrites `tenant.domain.com/*` → internal `/t/tenant/*` routes. The `app/t/[tenant]/` file structure is preserved but URLs are clean subdomains.
+
+`lvh.me` is used for local development because it resolves to `127.0.0.1` and supports wildcard subdomain cookies (`.lvh.me`).
 
 #### URL Structure
 
 | Area | URL Pattern | Notes |
 |------|-------------|-------|
-| Main site | `portl.com/` | Landing page |
-| Auth | `portl.com/auth/*` | Sign in, sign up |
-| Account | `portl.com/account/*` | User account area |
-| Dashboard | `portl.com/dashboard/*` | Organizer dashboard |
-| **Tenant pages** | `portl.com/t/[tenant]/*` | Public tenant pages |
-| Admin | `admin.portl.com/*` | Admin panel (keep subdomain) |
+| Main site | `lvh.me:3000/` | Landing page |
+| Auth | `lvh.me:3000/auth/*` | Sign in, sign up |
+| Account | `lvh.me:3000/account/*` | User account area |
+| Dashboard | `lvh.me:3000/dashboard/*` | Organizer dashboard |
+| **Tenant pages** | `acme.lvh.me:3000/*` | Public tenant pages (subdomain) |
+| Admin | `admin.lvh.me:3000/*` | Admin panel |
 
 #### Routing Flow
 
-1. **Proxy-based routing** - Uses `proxy.ts` (Next.js 15+ pattern) for minimal routing
-2. The proxy only handles:
-   - Admin subdomain rewrites (`admin.domain.com` → `/admin` routes)
-   - Path redirects (`/admin` → `admin.domain.com`)
-3. Tenant routes use `app/t/[tenant]/` dynamic route structure (standard Next.js routing)
+1. **Proxy-based routing** - Uses `proxy.ts` (Next.js 15+ pattern) for subdomain routing
+2. The proxy handles:
+   - Admin subdomain rewrites (`admin.domain.com/*` → `/admin/*` routes)
+   - **Tenant subdomain rewrites** (`tenant.domain.com/*` → `/t/tenant/*` routes)
+   - Backward compat redirects (`/t/tenant/*` on main domain → `tenant.domain.com/*`)
+   - Auth page redirect for authenticated users (main domain only)
+3. File structure uses `app/t/[tenant]/` internally — URLs are clean subdomains
 4. Tenant validation happens at the **page/layout level** using `lib/tenant.ts`
-5. No wildcard subdomains needed - simpler auth cookie handling
 
 #### Proxy Configuration
 
-The `proxy.ts` file is simplified to only handle admin subdomain:
+The `proxy.ts` handles admin + tenant subdomain routing:
 
 **Key Features**:
 - Runs in Edge Runtime (no Prisma/database access)
-- Only handles admin subdomain routing
-- All other routes use standard Next.js path-based routing
+- Handles admin and tenant subdomain rewrites
+- Redirects `/t/*` paths on main domain to proper subdomain URLs
+- Uses `NEXT_PUBLIC_ROOT_DOMAIN` to determine the root domain
 - Skips static files (`/_next`) and API routes early for performance
 
-**Export Pattern**:
+#### URL Helper (`lib/url.ts`)
+
+Two helper functions for building cross-domain URLs:
+
 ```typescript
-export function proxy(request: NextRequest) {
-  // Only handle admin subdomain
-  if (host.startsWith('admin.')) {
-    return NextResponse.rewrite(new URL(`/admin${pathname}`, request.url));
-  }
-  return NextResponse.next();
-}
-export const config = { matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'] }
+import { tenantUrl, mainUrl } from '@/lib/url';
+
+tenantUrl('acme', '/events')     // → 'http://acme.lvh.me:3000/events'
+mainUrl('/auth/signin')          // → 'http://lvh.me:3000/auth/signin'
 ```
 
 #### Tenant Validation Pattern
@@ -110,10 +117,37 @@ if (!tenant) {
 
 #### Key Models
 
-- **User**: Stores user accounts with `role` (USER, ORGANIZER, ADMIN)
-- **Tenant**: Represents each organization/subdomain with unique subdomain constraint
+- **User**: Stores user accounts with `role` (USER, ADMIN) — global platform role only
+- **Tenant**: Represents each organization/subdomain with unique subdomain constraint, has `type` (ORGANIZER, VENUE, ARTIST)
+- **TenantMember**: Join table for tenant-scoped roles (`userId + tenantId` unique). Roles: OWNER, ADMIN, MANAGER, MEMBER
+- **TenantInvitation**: Email-based team invitations with token, expiration, status (PENDING, ACCEPTED, EXPIRED, REVOKED)
 - **OrganizerApplication**: Tracks organizer applications with multi-step status (NOT_STARTED, IN_PROGRESS, SUBMITTED, APPROVED, REJECTED)
 - One application per user per tenant (composite unique constraint)
+
+#### TenantMember Roles
+
+| Role | Dashboard Access | Events | Team Management |
+|------|-----------------|--------|-----------------|
+| OWNER | Full | Full | Full (can change roles) |
+| ADMIN | Full | Full | Can invite/remove MANAGER/MEMBER |
+| MANAGER | Limited | View/Edit | View only |
+| MEMBER | Home only | None | None |
+
+#### Authorization Pattern
+
+```typescript
+import { requireTenantAccess } from '@/lib/tenant';
+
+// In server actions - specify minimum role
+const { tenant, user, membership } = await requireTenantAccess(subdomain, 'ADMIN');
+
+// requireTenantOwner delegates to requireTenantAccess('ADMIN')
+const { tenant, user } = await requireTenantOwner(subdomain);
+
+// Check role hierarchy
+import { hasMinimumRole } from '@/lib/tenant';
+hasMinimumRole('ADMIN', 'MANAGER'); // true
+```
 
 #### Database Connection
 
@@ -143,19 +177,22 @@ The platform has two distinct user-facing areas:
 - **Access**: Any authenticated user
 - **Key pages**:
   - `/account` - Overview
-  - `/account/tickets` - My tickets (placeholder until Order model exists)
-  - `/account/orders` - Order history (placeholder)
+  - `/account/tickets` - My tickets list (grouped by event)
+  - `/account/tickets/[ticketId]` - Ticket detail with QR code
+  - `/account/orders` - Order history
+  - `/account/orders/[orderId]` - Order detail
   - `/account/settings` - Profile and password settings
 
 #### Dashboard Area (Organizers)
-- **Purpose**: Business/tenant management, event creation
+- **Purpose**: Business/tenant management, event creation, team management
 - **Routes**: `/dashboard/*` on main domain
-- **Access**: Users who own tenants
+- **Access**: Users with `TenantMember` membership (role-based visibility)
 - **Key pages**:
   - `/dashboard` - Business selector (auto-redirects to tenant dashboard if user has only 1 tenant)
   - `/dashboard/[tenant]` - Tenant dashboard
-  - `/dashboard/[tenant]/events` - Event management
-  - `/dashboard/[tenant]/apply` - Organizer application
+  - `/dashboard/[tenant]/events` - Event management (OWNER, ADMIN, MANAGER)
+  - `/dashboard/[tenant]/team` - Team management (OWNER, ADMIN)
+  - `/dashboard/[tenant]/apply` - Organizer application (OWNER only)
 
 **Smart redirect**: Users with a single tenant skip the business selector and go directly to their dashboard.
 
@@ -184,56 +221,101 @@ Multi-step application system for users to become organizers:
 #### Application State Management
 
 - Applications save progress automatically (can exit and resume)
-- Status tracked: NOT_STARTED → IN_PROGRESS → SUBMITTED → (future: APPROVED/REJECTED)
-- User role remains USER until admin approval (not yet implemented)
+- Status tracked: NOT_STARTED → IN_PROGRESS → SUBMITTED → APPROVED/REJECTED
+- On approval: `TenantMember(role: OWNER)` is created, tenant status set to ACTIVE
+- User's global role stays `USER` — tenant access is controlled by `TenantMember` membership
 
 ### File Organization
 
 ```
 app/
-├── (landing-page)/         # Route group for main landing page
-│   ├── account/            # Attendee account area
-│   │   ├── layout.tsx
-│   │   ├── page.tsx        # Account overview
-│   │   ├── tickets/        # My tickets
-│   │   ├── orders/         # Order history
-│   │   └── settings/       # Profile settings
-│   └── organizer/          # Organizer registration
+├── account/                # Attendee account area
+│   ├── layout.tsx
+│   ├── page.tsx            # Account overview + affiliations
+│   ├── tickets/            # My tickets
+│   ├── orders/             # Order history
+│   └── settings/           # Profile settings
+├── actions/                # Server actions
+│   ├── admin.ts            # Admin application management
+│   ├── admin-tenants.ts    # Admin tenant management
+│   ├── admin-users.ts      # Admin user management
+│   ├── checkout.ts         # Checkout/payment actions
+│   ├── invitations.ts      # Invitation accept/get actions
+│   ├── organizer.ts        # Organizer registration/application
+│   ├── profile.ts          # User profile actions
+│   ├── public-events.ts    # Public event queries
+│   ├── tenant-events.ts    # Tenant event CRUD (tables, tickets, promotions)
+│   ├── tenant-members.ts   # Team management actions
+│   └── upload.ts           # File upload actions
+├── admin/                  # Admin panel (admin subdomain)
+├── auth/                   # Auth pages (signin, signup, error)
 ├── dashboard/              # Organizer dashboard (main domain)
 │   ├── page.tsx            # Business selector (auto-redirects if 1 tenant)
 │   └── [tenant]/           # Tenant-specific dashboard
-├── t/                      # Tenant routes prefix
-│   └── [tenant]/           # Dynamic tenant routes (public-facing)
+│       ├── events/         # Event management
+│       └── team/           # Team management (OWNER/ADMIN only)
+│           └── page.tsx
+├── invite/                 # Invitation accept flow
+│   └── [token]/
+│       ├── page.tsx        # Server component
+│       └── invite-accept-card.tsx  # Client component
+├── t/                      # Tenant routes (internal, served via subdomain rewrite)
+│   └── [tenant]/           # Dynamic tenant routes (public via tenant.domain.com)
+│       ├── checkout/       # Checkout flow
 │       ├── events/         # Tenant events listing
-│       ├── organizer/      # Tenant organizer routes
 │       ├── profile/        # Tenant profile page
 │       └── page.tsx        # Tenant home page
-├── admin/                  # Admin panel (requires auth)
-├── api/                    # API routes
-│   ├── auth/               # NextAuth handlers
-│   └── organizer/          # Organizer application APIs
-└── auth/                   # Auth pages (signin, signup, error)
+└── api/                    # API routes
+    ├── auth/               # NextAuth handlers
+    └── webhooks/
+        └── paymongo/       # PayMongo webhook (checkout_session.payment.paid)
 
 components/
 ├── account/                # Account area components
+│   └── affiliations-section.tsx  # Tenant memberships with visibility toggle
+├── admin/                  # Admin panel components
+├── checkout/               # Checkout flow components
 ├── dashboard/              # Dashboard components
+│   ├── events/             # Event management components
+│   └── team/               # Team management components
+│       ├── team-section.tsx
+│       ├── invite-member-form.tsx
+│       └── edit-member-form.tsx
 ├── layout/                 # Navbar, Footer, UserMenu
 ├── organizer/              # Organizer form components
 ├── profile/                # Profile form components
 ├── providers/              # SessionProvider wrapper
 ├── public/                 # Public-facing components
 │   └── events/             # Public event pages components
-└── ui/                     # shadcn/ui components
+└── ui/                     # shadcn/ui components + ticket-qr-code.tsx
 
 lib/
 ├── auth.ts                 # Auth helper functions
+├── email.ts                # SendGrid email helper
+├── paymongo.ts             # PayMongo API client helper
 ├── prisma.ts               # Prisma client re-export
-└── tenant.ts               # Tenant validation utilities
+├── tenant.ts               # Tenant validation + requireTenantAccess()
+├── url.ts                  # URL helpers (tenantUrl, mainUrl)
+└── validations/
+    ├── checkout.ts          # Checkout/payment Zod schemas
+    ├── events.ts            # Event management Zod schemas
+    └── team.ts              # Team management Zod schemas
 
 prisma/
 ├── client.ts               # Prisma Client singleton
 ├── generated/              # Generated Prisma Client (gitignored)
-└── schema.prisma           # Database schema
+├── models/                 # Prisma schema files (multi-file)
+│   ├── event.prisma
+│   ├── event-image.prisma
+│   ├── order.prisma
+│   ├── tenant.prisma
+│   ├── tenant-invitation.prisma
+│   ├── tenant-member.prisma
+│   ├── ticket-type.prisma
+│   └── user.prisma
+├── scripts/                # Migration/backfill scripts
+│   └── backfill-tenant-members.ts
+└── seed.ts                 # Database seed script
 
 prisma.config.ts            # Prisma 7 configuration (root level)
 auth.ts                     # NextAuth configuration (root level)
@@ -270,74 +352,90 @@ import { getCurrentTenant } from '@/lib/tenant';
 
 ### Multi-Tenant Link Handling
 
-With path-based routing, link handling is simpler - all links are on the same domain.
+With subdomain-based routing, there are three link contexts:
 
 #### Rules
 
-1. **Main domain routes** (`/account`, `/dashboard`, `/auth/*`, `/organizer/*`):
-   - Use absolute paths: `href="/account"`
+1. **Within-tenant links** (components rendered on a tenant subdomain):
+   - Use **relative paths**: `href="/events"`, `href="/checkout"`
+   - The proxy rewrites these to the correct internal `/t/[tenant]/*` route
+   - **Never** use `/t/${tenant}/` prefix in tenant-rendered components
 
-2. **Tenant public pages** (inside `app/t/[tenant]/`):
-   - Always use `/t/` prefix: `href={`/t/${tenant}/events`}`
-   - Never omit the `/t/` prefix for tenant routes
+2. **Cross-domain links from main domain TO tenant** (dashboard, account, admin):
+   - Use `tenantUrl()` helper: `href={tenantUrl(subdomain, '/events')}`
+   - Use `<a>` tag (not `<Link>`) since it's a different domain
 
-3. **Dashboard routes** (inside `app/dashboard/[tenant]/`):
+3. **Cross-domain links from tenant TO main domain** (auth, account, dashboard):
+   - Use `mainUrl()` helper: `href={mainUrl('/auth/signin')}`
+   - TenantNavbar passes `mainDomainPrefix` to HeaderActions/UserMenu
+   - Use `<a>` tag (not `<Link>`) for cross-domain navigation
+
+4. **Dashboard routes** (on main domain):
    - Use `/dashboard/` prefix: `href={`/dashboard/${tenant}/events`}`
-   - These are organizer-facing, not public
+   - These are organizer-facing, on the main domain
 
-4. **Server Actions and redirects**:
-   - Use `redirect('/path')` for main domain routes
-   - Use `redirect(`/t/${tenant}/path`)` for public tenant routes
-   - Use `redirect(`/dashboard/${tenant}/path`)` for dashboard routes
+5. **Server Actions and redirects**:
+   - Use `tenantUrl()` for PayMongo callback URLs
+   - `revalidatePath('/t/${sub}/...')` still uses internal path (correct)
+   - Auth redirects from tenant pages use `mainUrl()` with full `callbackUrl`
 
 #### Examples
 
 ```typescript
-// GOOD - Main domain link
-<Link href="/account">My Account</Link>
-<Link href="/dashboard">Dashboard</Link>
+import { tenantUrl, mainUrl } from '@/lib/url';
 
-// GOOD - Public tenant page (note the /t/ prefix)
-<Link href={`/t/${tenant}/events`}>Events</Link>
-<Link href={`/t/${tenant}/events/${eventId}`}>Event Detail</Link>
+// GOOD - Within-tenant link (on tenant subdomain)
+<Link href="/events">Events</Link>
+<Link href={`/events/${eventId}`}>Event Detail</Link>
 
-// GOOD - Dashboard tenant page
+// GOOD - Main domain to tenant (cross-domain)
+<a href={tenantUrl(subdomain, '/events')}>View Events</a>
+<a href={tenantUrl(subdomain, `/events/${eventId}`)}>View Live</a>
+
+// GOOD - Tenant to main domain (cross-domain)
+<a href={mainUrl('/auth/signin')}>Sign In</a>
+<a href={mainUrl('/account/tickets')}>My Tickets</a>
+
+// GOOD - Dashboard (main domain, same domain)
 <Link href={`/dashboard/${tenant}/events`}>Manage Events</Link>
 
-// GOOD - Server Action redirects
-redirect(`/t/${subdomain}/events`)      // Public tenant page
-redirect(`/dashboard/${subdomain}`)     // Dashboard page
+// GOOD - Server Action PayMongo URLs
+successUrl: tenantUrl(subdomain, `/checkout/success/${orderId}`)
 
-// BAD - Missing /t/ prefix for public tenant page
-<Link href={`/${tenant}/events`}>Events</Link>
+// BAD - Using /t/ prefix in tenant-rendered component
+<Link href={`/t/${tenant}/events`}>Events</Link>
 
-// BAD - Using /t/ for dashboard routes
-<Link href={`/t/${tenant}/events/new`}>Create Event</Link> // Should be /dashboard/
+// BAD - Using <Link> for cross-domain navigation
+<Link href={tenantUrl(sub, '/events')}>Events</Link> // Should use <a>
 ```
 
-#### Route Prefixes
+#### Route Prefixes (internal file structure)
 
-- `/t/[tenant]/*` - Public tenant pages (events, profile, etc.)
-- `/dashboard/[tenant]/*` - Organizer dashboard (event management)
-- `/account/*` - User account area
-- `/auth/*` - Authentication pages
-- `/admin/*` - Admin panel (admin subdomain only)
+- `app/t/[tenant]/*` - Tenant pages (served via `tenant.domain.com/*`)
+- `app/dashboard/[tenant]/*` - Organizer dashboard (main domain)
+- `app/account/*` - User account area (main domain)
+- `app/auth/*` - Authentication pages (main domain)
+- `app/admin/*` - Admin panel (admin subdomain)
 
 ## Development Notes
 
 ### Local Testing
 
-Most routes work on `localhost:3000` directly:
-- Landing page: `http://localhost:3000`
-- Tenant pages: `http://localhost:3000/t/tenant-name/events`
-- Dashboard: `http://localhost:3000/dashboard`
+Uses `lvh.me` which resolves to `127.0.0.1` and supports wildcard subdomains:
+- Landing page: `http://lvh.me:3000`
+- Tenant pages: `http://acme.lvh.me:3000/events`
+- Dashboard: `http://lvh.me:3000/dashboard`
+- Admin: `http://admin.lvh.me:3000`
 
-For admin subdomain testing, add to `/etc/hosts`:
-```
-127.0.0.1 admin.localhost
-```
+No `/etc/hosts` configuration needed - `lvh.me` works out of the box.
 
-Then access: `http://admin.localhost:3000`
+#### Environment Variables (required for local dev)
+
+```
+AUTH_URL="http://lvh.me:3000"
+NEXT_PUBLIC_APP_URL="http://lvh.me:3000"
+NEXT_PUBLIC_ROOT_DOMAIN="lvh.me:3000"
+```
 
 ### Database Workflow
 
@@ -507,6 +605,23 @@ Zod schemas in `lib/validations/events.ts`:
 - Applies to: ORDER (cart total) or ITEM (per ticket)
 - Optional voucher codes with max redemptions
 
+#### Ticket Type Edit Restrictions (Sales Protection)
+
+Once tickets have been sold (`quantitySold > 0`), structural fields are locked:
+
+| Field | Status | Reason |
+|-------|--------|--------|
+| `kind` | LOCKED | Changing type breaks existing tickets |
+| `tableId` | LOCKED | Changing table breaks seat assignments |
+| `quantityTotal` | Must be >= `quantitySold` | Can't go below already sold |
+| `name`, `description`, `basePrice`, `transferrable`, `cancellable` | Editable | Cosmetic/policy changes |
+
+**Enforcement**:
+- **Server-side**: `updateTicketTypeForTenantAction` rejects `kind`/`tableId` changes and invalid `quantityTotal` when `quantitySold > 0`
+- **Server-side**: `deleteTicketTypeForTenantAction` blocks deletion when `quantitySold > 0`
+- **UI**: `TicketTypeForm` accepts `quantitySold` prop, disables Kind/Table selects and shows amber warning banner
+- **UI**: `TicketsSection` disables delete button with tooltip when sales exist
+
 ## Public Events Pages
 
 Public-facing event pages allow users to browse and view published events.
@@ -549,42 +664,124 @@ Public event server actions in `app/actions/public-events.ts`:
 - Events list: `localhost:3000/t/[tenant]/events`
 - Event detail: `localhost:3000/t/[tenant]/events/[eventId]`
 
+## Checkout & Payment System
+
+### PayMongo Integration
+
+The platform uses PayMongo Checkout Sessions for payment processing.
+
+- **Currency**: PHP (amounts stored in centavos — 100 = PHP 1.00)
+- **Flow**: Cart → Attendee details → Create checkout session → Redirect to PayMongo → Webhook confirms payment → Redirect to success page
+- **Webhook**: `/api/webhooks/paymongo` handles `checkout_session.payment.paid` event
+- **Signature verification**: HMAC-SHA256 with `"${timestamp}.${rawBody}"` format; `te` = test, `li` = live in `Paymongo-Signature` header
+- **Success page sync fallback**: If webhook hasn't arrived yet, success page retrieves checkout session directly from PayMongo API
+
+### Routes
+
+```
+app/t/[tenant]/checkout/
+├── page.tsx                        # Checkout flow (cart review, attendee forms)
+└── success/
+    └── [orderId]/
+        └── page.tsx                # Order confirmation with ticket QR codes
+```
+
+### Key Files
+
+- `app/actions/checkout.ts`: Server actions for creating orders and checkout sessions
+- `app/api/webhooks/paymongo/route.ts`: Webhook handler for payment confirmation
+- `lib/paymongo.ts`: PayMongo API client helper
+- `lib/validations/checkout.ts`: Checkout Zod schemas (`paymentAttendeeSchema`)
+- `components/checkout/`: Checkout flow components (attendee form, payment step, success)
+- `prisma/models/order.prisma`: Order, OrderItem, Ticket models
+
+### Order Metadata
+
+Order metadata (Json field) stores attendee data across the redirect to PayMongo. The `paymentAttendeeSchema` (from `lib/validations/checkout.ts`) is used for payment session data — distinct from the component-level `AttendeeData` type.
+
+## Ticket QR Codes
+
+- **Library**: `react-qr-code` (SVG-based, lightweight)
+- **Component**: `components/ui/ticket-qr-code.tsx` — client component wrapper (`'use client'`)
+- **Ticket detail page** (`/account/tickets/[ticketId]`): Full-size QR (192px) encoding `ticketCode`
+- **Checkout success page**: Small QR (64px) next to each ticket in order confirmation
+- QR encodes the `ticketCode` string (format: `TKT-XXXX-XXXX`)
+
+## Team Management
+
+### Invitation Flow
+
+1. OWNER/ADMIN invites via email → `TenantInvitation` created with 7-day expiry token
+2. SendGrid sends email with invite link (`/invite/[token]`)
+3. Recipient clicks link → redirected to signin if not authenticated
+4. Authenticated user sees invitation details → clicks "Accept"
+5. `TenantMember` created, invitation marked ACCEPTED, user redirected to dashboard
+
+### Server Actions (`app/actions/tenant-members.ts`)
+
+- `getTeamMembersAction(subdomain)` — requires MANAGER+
+- `inviteTeamMemberAction(subdomain, data)` — requires ADMIN+
+- `updateTeamMemberAction(subdomain, memberId, data)` — OWNER for role changes, ADMIN for title/visibility
+- `removeTeamMemberAction(subdomain, memberId)` — cannot remove self or OWNER
+- `toggleMemberProfileVisibilityAction(memberId, visible)` — user toggles own `userShowInProfile`
+- `getPendingInvitationsAction(subdomain)` — requires ADMIN+
+- `revokeInvitationAction(subdomain, invitationId)` — requires ADMIN+
+
+### Validation Schemas (`lib/validations/team.ts`)
+
+- `inviteMemberSchema`: email, role (ADMIN/MANAGER/MEMBER), optional title
+- `updateMemberSchema`: optional role, title, tenantShowInProfile
+
+### Email (`lib/email.ts`)
+
+- Uses SendGrid (`@sendgrid/mail`)
+- Graceful fallback: logs to console when `SENDGRID_API_KEY` not set
+- Env vars: `SENDGRID_API_KEY`, `SENDGRID_FROM_EMAIL`
+
 ## Important Constraints
 
-1. **Path-based tenant routing**: Tenant pages use `/t/[tenant]/*` prefix, not subdomains
-2. **Admin subdomain only**: Admin panel is the only subdomain (`admin.domain.com`)
+1. **Subdomain-based tenant routing**: Tenant pages served via `tenant.domain.com/*`, proxy rewrites to internal `/t/[tenant]/*`
+2. **Admin subdomain**: Admin panel on `admin.domain.com`
 3. **Edge Runtime limitations**: The proxy cannot access Prisma, database, or full Node.js APIs
 4. **Tenant validation in components**: Always validate tenants in Server Components, not in the proxy
 5. **JWT sessions required**: Credentials provider requires JWT strategy, not database sessions
 6. **Prisma 7 specific**: Must use `prisma.config.ts` and custom client output path
 7. **Multi-tenant unique constraints**: Users can have one application per tenant
-8. **Tenant route prefix**: Always use `/t/` prefix for public tenant routes, `/dashboard/` for organizer routes
+8. **Cross-domain links**: Use `tenantUrl()` / `mainUrl()` helpers; use `<a>` not `<Link>` for cross-domain nav
+9. **Cookie domain**: Set via `AUTH_URL` → `.lvh.me` in dev, `.portl.com` in prod; shared across all subdomains
 
 ## Current Implementation Status
 
-**Completed (Phase 3)**:
+**Completed**:
 - User authentication system (credentials-based)
-- Multi-tenant tenant model
-- Organizer application flow (3-step form)
+- Multi-tenant tenant model with `TenantMember` role-based access
+- Tenant-scoped roles (OWNER, ADMIN, MANAGER, MEMBER) via `TenantMember` join table
+- Team management UI with invite/edit/remove member functionality
+- Email invitations via SendGrid with token-based accept flow (`/invite/[token]`)
+- Organizer application flow (3-step form) with admin approval
+- Admin approval creates `TenantMember(OWNER)` + sets tenant ACTIVE
 - Progress saving and resume capability
 - Tenant-scoped applications
+- Account affiliations section with visibility toggles
 - Basic UI components
-- Attendee account area (`/account/*`)
+- Attendee account area (`/account/*`) with tickets and orders
 - Navbar user dropdown with space switching
 - Dashboard auto-redirect for single-tenant users
 - Event creation and management (CRUD)
 - Tables management (single + bulk creation)
 - Ticket types with table associations
+- Ticket type edit restrictions (sales protection)
 - Price tiers (time window + allocation strategies)
 - Promotions with voucher codes
-- Public events pages with path-based routing (`/t/[tenant]/*`)
+- Public events pages with subdomain-based routing
+- Checkout flow with PayMongo payment integration
+- Order and ticket creation via webhooks
+- Ticket QR codes on detail page and checkout success
+- Ticket detail page with attendee info, event details, QR code
 
 **Not Yet Implemented**:
-- Admin approval system for organizer applications
-- Role elevation (USER → ORGANIZER)
-- Ticketing system (Order, Ticket, purchase flow)
+- Ticket check-in / QR scanning
 - Analytics dashboard
-- Email notifications
 - OAuth providers (Google, GitHub) - configured but commented out
 
 ## References

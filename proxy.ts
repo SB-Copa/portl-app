@@ -5,10 +5,10 @@ import { auth } from '@/auth'
 /**
  * Next.js 15 Proxy Function (replaces middleware)
  *
- * Simplified routing:
- * - Admin subdomain (admin.domain.com) → rewrites to /admin routes
- * - All other routes use path-based routing (no subdomain rewrites)
- * - Tenant pages use /t/[tenant]/ path pattern
+ * Subdomain-based routing:
+ * - admin.domain.com → rewrites to /admin routes
+ * - tenant.domain.com → rewrites to /t/tenant routes
+ * - Direct /t/* access on main domain → redirects to subdomain
  *
  * NOTE: This runs in Edge Runtime which doesn't support:
  * - Prisma (use Node.js runtime in pages/API routes instead)
@@ -23,48 +23,69 @@ export async function proxy(request: NextRequest) {
         return NextResponse.next()
     }
 
-    // Redirect authenticated users away from auth pages
-    if (pathname.startsWith('/auth/')) {
+    const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'lvh.me:3000'
+    // Strip port for hostname comparison
+    const rootHostname = rootDomain.split(':')[0]
+    const currentHostname = host.split(':')[0]
+
+    // --- Admin subdomain ---
+    if (currentHostname === `admin.${rootHostname}`) {
+        return NextResponse.rewrite(new URL(`/admin${pathname}`, request.url))
+    }
+
+    // /admin route on main domain → redirect to admin subdomain
+    if (pathname.startsWith('/admin') && currentHostname === rootHostname) {
+        const adminUrl = new URL(request.url)
+        adminUrl.host = `admin.${rootDomain}`
+        adminUrl.pathname = pathname.replace(/^\/admin/, '') || '/'
+        return NextResponse.redirect(adminUrl)
+    }
+
+    // --- Tenant subdomain ---
+    // Check if current host is a subdomain of root domain (not admin, not main)
+    if (
+        currentHostname !== rootHostname &&
+        currentHostname !== `admin.${rootHostname}` &&
+        currentHostname.endsWith(`.${rootHostname}`)
+    ) {
+        const subdomain = currentHostname.replace(`.${rootHostname}`, '')
+        // Rewrite to internal /t/[tenant] routes
+        return NextResponse.rewrite(new URL(`/t/${subdomain}${pathname}`, request.url))
+    }
+
+    // --- Main domain only below ---
+
+    // Redirect /t/[tenant]/* on main domain → tenant subdomain
+    if (pathname.startsWith('/t/') && currentHostname === rootHostname) {
+        const segments = pathname.split('/')
+        // segments: ['', 't', 'tenant-slug', ...rest]
+        const subdomain = segments[2]
+        if (subdomain) {
+            const rest = segments.slice(3).join('/')
+            const tenantUrl = new URL(request.url)
+            tenantUrl.host = `${subdomain}.${rootDomain}`
+            tenantUrl.pathname = rest ? `/${rest}` : '/'
+            return NextResponse.redirect(tenantUrl)
+        }
+    }
+
+    // Redirect authenticated users away from auth pages (main domain only)
+    if (pathname.startsWith('/auth/') && currentHostname === rootHostname) {
         try {
             const session = await auth()
             if (session?.user) {
-                // Authenticated user trying to access auth pages → redirect to dashboard
-                return NextResponse.redirect(new URL('/dashboard', request.url))
+                return NextResponse.redirect(new URL('/account', request.url))
             }
         } catch {
-            // If auth() fails in Edge Runtime, check for auth cookie directly
-            // NextAuth JWT strategy uses 'authjs.session-token' cookie
             const sessionCookie = request.cookies.get('authjs.session-token') ||
                                  request.cookies.get('__Secure-authjs.session-token') ||
                                  request.cookies.get('next-auth.session-token') ||
                                  request.cookies.get('__Secure-next-auth.session-token')
             if (sessionCookie) {
-                return NextResponse.redirect(new URL('/dashboard', request.url))
+                return NextResponse.redirect(new URL('/account', request.url))
             }
         }
     }
-
-    // /admin route → redirect to admin. subdomain
-    if (pathname.startsWith('/admin') && !host.startsWith('admin.')) {
-        const adminUrl = new URL(request.url)
-        adminUrl.host = `admin.${host}`
-        // Remove /admin prefix from pathname
-        adminUrl.pathname = pathname.replace(/^\/admin/, '') || '/'
-        return NextResponse.redirect(adminUrl)
-    }
-
-    // admin.domain.com → rewrite to /admin routes
-    // Note: Authentication is handled in the /admin layout.tsx or page.tsx
-    if (host.startsWith('admin.')) {
-        return NextResponse.rewrite(new URL(`/admin${pathname}`, request.url))
-    }
-
-    // All other routes: normal path-based routing
-    // - /t/[tenant]/* → public tenant pages
-    // - /dashboard/* → organizer dashboard
-    // - /account/* → user account
-    // - /auth/* → auth pages
-    // No rewrites needed - Next.js handles these directly
 
     return NextResponse.next()
 }

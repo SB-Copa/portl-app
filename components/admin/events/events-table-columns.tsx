@@ -17,9 +17,9 @@ import Link from 'next/link';
 import { Event } from '@/prisma/generated/prisma/client';
 
 const statusColors = {
-  DRAFT: 'bg-gray-100 text-gray-800',
-  PUBLISHED: 'bg-green-100 text-green-800',
-  ARCHIVED: 'bg-slate-100 text-slate-800',
+  DRAFT: 'bg-muted text-muted-foreground',
+  PUBLISHED: 'bg-green-500/20 text-green-400',
+  ARCHIVED: 'bg-muted text-muted-foreground',
 };
 
 const statusLabels = {
@@ -36,8 +36,8 @@ export const columns: ColumnDef<Event>[] = [
       const eventId = row.original.id;
       return (
         <Link
-          href={`/admin/events/${eventId}`}
-          className="font-medium hover:underline text-blue-600"
+          href={`/events/${eventId}`}
+          className="font-medium hover:underline text-primary"
         >
           {row.original.name}
         </Link>
@@ -81,7 +81,7 @@ export const columns: ColumnDef<Event>[] = [
     cell: ({ row }) => {
       const createdAt = row.original.createdAt;
       return (
-        <span className="text-sm text-gray-500">
+        <span className="text-sm text-muted-foreground">
           {formatDistanceToNow(new Date(createdAt), { addSuffix: true })}
         </span>
       );
@@ -103,13 +103,13 @@ export const columns: ColumnDef<Event>[] = [
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
             <DropdownMenuItem asChild>
-              <Link href={`/admin/events/${event.id}`}>
+              <Link href={`/events/${event.id}`}>
                 <Eye className="mr-2 h-4 w-4" />
                 View Details
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link href={`/admin/events/${event.id}/edit`}>
+              <Link href={`/events/${event.id}/edit`}>
                 <Edit className="mr-2 h-4 w-4" />
                 Edit
               </Link>
@@ -118,7 +118,7 @@ export const columns: ColumnDef<Event>[] = [
               <>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link href={`/admin/events/${event.id}`}>
+                  <Link href={`/events/${event.id}`}>
                     <Archive className="mr-2 h-4 w-4" />
                     Archive
                   </Link>

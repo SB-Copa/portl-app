@@ -5,8 +5,11 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { signUpAction } from '@/app/actions/auth';
+import { useSearchParams } from 'next/navigation';
 
 export default function SignUpPage() {
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get('callbackUrl') || '/account';
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -76,6 +79,7 @@ export default function SignUpPage() {
 
           {/* Sign Up Form */}
           <form action={handleSubmit} className="space-y-4">
+            <input type="hidden" name="redirectTo" value={callbackUrl} />
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label htmlFor="firstName" className="text-sm font-medium">
@@ -178,17 +182,6 @@ export default function SignUpPage() {
           </div>
         </div>
 
-        {/* Terms */}
-        <p className="mt-6 text-center text-xs">
-          By signing up, you agree to our{' '}
-          <Link href="/terms" className="underline">
-            Terms of Service
-          </Link>{' '}
-          and{' '}
-          <Link href="/privacy" className="underline">
-            Privacy Policy
-          </Link>
-        </p>
       </div>
     </div>
   );

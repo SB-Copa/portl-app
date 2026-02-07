@@ -1,13 +1,14 @@
 'use client';
 
 import { useState, useEffect, useTransition, useRef } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Loader2, ArrowLeft, AlertCircle } from 'lucide-react';
-import { CheckoutSteps, OrderReview, AttendeeForm, PaymentPlaceholder, type AttendeeData } from '@/components/checkout';
+import { CheckoutSteps, OrderReview, AttendeeForm, PaymentStep, type AttendeeData } from '@/components/checkout';
 import { initializeCheckoutAction, getOrderForCheckoutAction, cancelOrderAction, getPendingOrderForTenantAction, type OrderWithRelations } from '@/app/actions/checkout';
 import { getCartForTenantAction } from '@/app/actions/cart';
+import { mainUrl } from '@/lib/url';
 import { useSession } from 'next-auth/react';
 
 const CHECKOUT_STEPS = [
@@ -19,8 +20,10 @@ const CHECKOUT_STEPS = [
 export default function CheckoutPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { data: session, status } = useSession();
   const tenantSubdomain = params.tenant as string;
+  const isResume = searchParams.get('resume') === 'true';
 
   const [currentStep, setCurrentStep] = useState(1);
   const [order, setOrder] = useState<OrderWithRelations | null>(null);
@@ -38,7 +41,7 @@ export default function CheckoutPage() {
 
     if (status === 'unauthenticated') {
       // Redirect to sign in
-      router.push(`/auth/signin?callbackUrl=/t/${tenantSubdomain}/checkout`);
+      window.location.href = mainUrl(`/auth/signin?callbackUrl=${encodeURIComponent(window.location.href)}`);
       return;
     }
 
@@ -58,6 +61,15 @@ export default function CheckoutPage() {
         if (!('error' in existingOrderResult) && existingOrderResult.data) {
           // Resume existing pending order
           setOrder(existingOrderResult.data);
+
+          // If resuming from PayMongo cancel, restore attendees from metadata
+          if (isResume) {
+            const metadata = existingOrderResult.data.metadata as { attendees?: AttendeeData[] } | null;
+            if (metadata?.attendees) {
+              setAttendees(metadata.attendees);
+            }
+          }
+
           setIsLoading(false);
           return;
         }
@@ -74,7 +86,7 @@ export default function CheckoutPage() {
 
         if (cartResult.data.items.length === 0) {
           // No items in cart, redirect to events
-          router.push(`/t/${tenantSubdomain}/events`);
+          router.push('/events');
           initializingRef.current = false;
           return;
         }
@@ -100,7 +112,7 @@ export default function CheckoutPage() {
     };
 
     initCheckout();
-  }, [status, tenantSubdomain, router]);
+  }, [status, tenantSubdomain, router, isResume]);
 
   const handleOrderUpdate = (updatedOrder: OrderWithRelations) => {
     setOrder(updatedOrder);
@@ -116,7 +128,7 @@ export default function CheckoutPage() {
 
     startTransition(async () => {
       await cancelOrderAction(order.id);
-      router.push(`/t/${tenantSubdomain}/events`);
+      router.push('/events');
     });
   };
 
@@ -144,7 +156,7 @@ export default function CheckoutPage() {
           <p className="text-muted-foreground">{error}</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button variant="outline" asChild>
-              <Link href={`/t/${tenantSubdomain}/events`}>
+              <Link href="/events">
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back to Events
               </Link>
@@ -168,7 +180,7 @@ export default function CheckoutPage() {
             Your cart is empty. Browse events to find tickets.
           </p>
           <Button asChild>
-            <Link href={`/t/${tenantSubdomain}/events`}>
+            <Link href="/events">
               Browse Events
             </Link>
           </Button>
@@ -221,7 +233,7 @@ export default function CheckoutPage() {
         )}
 
         {currentStep === 3 && (
-          <PaymentPlaceholder
+          <PaymentStep
             order={order}
             attendees={attendees}
             onBack={() => setCurrentStep(2)}

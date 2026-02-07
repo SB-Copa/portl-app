@@ -41,6 +41,7 @@ export default async function EditEventPage({
     endDate: formatDateForInput(event.endDate),
     endTime: event.endTime,
     status: event.status,
+    thumbnailUrl: event.thumbnailUrl || undefined,
   };
 
   async function handleSubmit(data: Parameters<typeof updateEventForTenantAction>[2]) {

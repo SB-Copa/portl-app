@@ -15,7 +15,7 @@ export function SeatsList({ table, onRegenerate }: SeatsListProps) {
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm font-medium">Table {table.label}</p>
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-muted-foreground">
             {table.seats.length} seat{table.seats.length !== 1 ? 's' : ''} configured
           </p>
         </div>
@@ -39,7 +39,7 @@ export function SeatsList({ table, onRegenerate }: SeatsListProps) {
               <TableRow key={seat.id}>
                 <TableCell className="font-medium">Seat {seat.seatIndex}</TableCell>
                 <TableCell>
-                  <span className="text-sm text-gray-500">Available</span>
+                  <span className="text-sm text-muted-foreground">Available</span>
                 </TableCell>
               </TableRow>
             ))}

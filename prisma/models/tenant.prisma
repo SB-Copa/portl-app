@@ -8,7 +8,17 @@ model Tenant {
   contactPhone          String?
   sameAsBusinessContact Boolean      @default(true)
   status                TenantStatus @default(INACTIVE)
+  type                  TenantType   @default(ORGANIZER)
   ownerId               String
+  logoUrl               String?
+  bannerUrl             String?
+  tagline               String?
+  description           String?      @db.Text
+  socialInstagram       String?
+  socialFacebook        String?
+  socialTwitter         String?
+  socialTiktok          String?
+  socialWebsite         String?
   createdAt             DateTime     @default(now())
   updatedAt             DateTime     @updatedAt
 
@@ -16,6 +26,9 @@ model Tenant {
   application OrganizerApplication?
   events      Event[]
   orders      Order[]
+  members     TenantMember[]
+  invitations TenantInvitation[]
+  images      TenantImage[]
 
   @@index([ownerId])
   @@map("tenants")
@@ -25,4 +38,10 @@ enum TenantStatus {
   INACTIVE
   ACTIVE
   SUSPENDED
+}
+
+enum TenantType {
+  ORGANIZER
+  VENUE
+  ARTIST
 }

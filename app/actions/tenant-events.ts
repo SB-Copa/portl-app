@@ -1,8 +1,9 @@
 'use server';
 
-import { requireTenantOwner } from '@/lib/tenant';
+import { requireTenantOwner, requireTenantAccess } from '@/lib/tenant';
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
+import { del } from '@vercel/blob';
 import type { EventFormData, TableFormData, BulkTableFormData, TicketTypeFormData, PriceTierFormData, PromotionFormData, VoucherCodeFormData } from '@/lib/validations/events';
 
 // Helper to verify event belongs to tenant
@@ -63,6 +64,9 @@ export async function getEventByIdForTenantAction(tenantSubdomain: string, event
     const event = await prisma.event.findUnique({
       where: { id: eventId },
       include: {
+        images: {
+          orderBy: { position: 'asc' },
+        },
         tables: {
           include: {
             seats: true,
@@ -151,6 +155,7 @@ export async function createEventForTenantAction(tenantSubdomain: string, data: 
         endDate,
         endTime: data.endTime,
         status: data.status ?? 'DRAFT',
+        thumbnailUrl: data.thumbnailUrl ?? null,
       },
     });
 
@@ -198,6 +203,7 @@ export async function updateEventForTenantAction(tenantSubdomain: string, eventI
         endDate,
         endTime: data.endTime,
         status: data.status ?? 'DRAFT',
+        thumbnailUrl: data.thumbnailUrl ?? null,
       },
     });
 
@@ -663,6 +669,7 @@ export async function createTicketTypeForTenantAction(tenantSubdomain: string, e
         transferrable: data.transferrable,
         cancellable: data.cancellable,
         tableId: data.tableId || null,
+        imageUrl: data.imageUrl ?? null,
       },
     });
 
@@ -696,6 +703,19 @@ export async function updateTicketTypeForTenantAction(tenantSubdomain: string, t
     }
 
     await verifyEventBelongsToTenant(existingTicketType.eventId, tenant.id);
+
+    // Enforce restrictions when tickets have been sold
+    if (existingTicketType.quantitySold > 0) {
+      if (data.kind !== existingTicketType.kind) {
+        return { error: 'Cannot change ticket kind after tickets have been sold' };
+      }
+      if (data.tableId !== existingTicketType.tableId) {
+        return { error: 'Cannot change table assignment after tickets have been sold' };
+      }
+      if (data.quantityTotal !== undefined && data.quantityTotal !== null && data.quantityTotal < existingTicketType.quantitySold) {
+        return { error: `Total quantity cannot be less than ${existingTicketType.quantitySold} tickets already sold` };
+      }
+    }
 
     if (data.kind === 'TABLE' || data.kind === 'SEAT') {
       if (!data.tableId) {
@@ -745,6 +765,7 @@ export async function updateTicketTypeForTenantAction(tenantSubdomain: string, t
         transferrable: data.transferrable,
         cancellable: data.cancellable,
         tableId: data.tableId || null,
+        imageUrl: data.imageUrl ?? null,
       },
     });
 
@@ -778,6 +799,10 @@ export async function deleteTicketTypeForTenantAction(tenantSubdomain: string, t
     }
 
     await verifyEventBelongsToTenant(ticketType.eventId, tenant.id);
+
+    if (ticketType.quantitySold > 0) {
+      return { error: `Cannot delete ticket type with ${ticketType.quantitySold} tickets already sold` };
+    }
 
     await prisma.ticketType.delete({
       where: { id: ticketTypeId },
@@ -1209,5 +1234,383 @@ export async function deleteVoucherCodeForTenantAction(tenantSubdomain: string, 
       return { error: error.message };
     }
     return { error: 'Failed to delete voucher code' };
+  }
+}
+
+// ============================================================================
+// EVENT IMAGES (GALLERY)
+// ============================================================================
+
+const MAX_EVENT_IMAGES = 10;
+
+/**
+ * Add an image to an event's gallery (tenant-scoped)
+ */
+export async function addEventImageAction(tenantSubdomain: string, eventId: string, url: string) {
+  try {
+    const { tenant } = await requireTenantOwner(tenantSubdomain);
+    await verifyEventBelongsToTenant(eventId, tenant.id);
+
+    const count = await prisma.eventImage.count({ where: { eventId } });
+    if (count >= MAX_EVENT_IMAGES) {
+      return { error: `Maximum of ${MAX_EVENT_IMAGES} images per event` };
+    }
+
+    const image = await prisma.eventImage.create({
+      data: {
+        eventId,
+        url,
+        position: count,
+      },
+    });
+
+    revalidatePath(`/dashboard/${tenantSubdomain}/events/${eventId}`);
+    return { data: image };
+  } catch (error) {
+    console.error('Error adding event image:', error);
+    if (error instanceof Error && (error.message.includes('Unauthorized') || error.message.includes('not found') || error.message.includes('not belong'))) {
+      return { error: error.message };
+    }
+    return { error: 'Failed to add image' };
+  }
+}
+
+/**
+ * Delete an event image and clean up blob storage (tenant-scoped)
+ */
+export async function deleteEventImageAction(tenantSubdomain: string, imageId: string) {
+  try {
+    const { tenant } = await requireTenantOwner(tenantSubdomain);
+
+    const image = await prisma.eventImage.findUnique({
+      where: { id: imageId },
+      include: { event: true },
+    });
+
+    if (!image) {
+      return { error: 'Image not found' };
+    }
+
+    await verifyEventBelongsToTenant(image.eventId, tenant.id);
+
+    await prisma.$transaction(async (tx) => {
+      await tx.eventImage.delete({ where: { id: imageId } });
+
+      // Reorder remaining images to close the gap
+      const remaining = await tx.eventImage.findMany({
+        where: { eventId: image.eventId },
+        orderBy: { position: 'asc' },
+      });
+
+      for (let i = 0; i < remaining.length; i++) {
+        if (remaining[i].position !== i) {
+          await tx.eventImage.update({
+            where: { id: remaining[i].id },
+            data: { position: i },
+          });
+        }
+      }
+    });
+
+    // Clean up blob (fire-and-forget)
+    if (image.url.includes('.public.blob.vercel-storage.com')) {
+      del(image.url).catch(() => {});
+    }
+
+    revalidatePath(`/dashboard/${tenantSubdomain}/events/${image.eventId}`);
+    return { success: true };
+  } catch (error) {
+    console.error('Error deleting event image:', error);
+    if (error instanceof Error && (error.message.includes('Unauthorized') || error.message.includes('not found') || error.message.includes('not belong'))) {
+      return { error: error.message };
+    }
+    return { error: 'Failed to delete image' };
+  }
+}
+
+/**
+ * Reorder event images (tenant-scoped)
+ */
+export async function reorderEventImagesAction(tenantSubdomain: string, eventId: string, imageIds: string[]) {
+  try {
+    const { tenant } = await requireTenantOwner(tenantSubdomain);
+    await verifyEventBelongsToTenant(eventId, tenant.id);
+
+    // Verify all images belong to this event
+    const images = await prisma.eventImage.findMany({
+      where: { eventId },
+      select: { id: true },
+    });
+
+    const existingIds = new Set(images.map((i) => i.id));
+    for (const id of imageIds) {
+      if (!existingIds.has(id)) {
+        return { error: 'Invalid image ID in reorder list' };
+      }
+    }
+
+    await prisma.$transaction(
+      imageIds.map((id, index) =>
+        prisma.eventImage.update({
+          where: { id },
+          data: { position: index },
+        })
+      )
+    );
+
+    revalidatePath(`/dashboard/${tenantSubdomain}/events/${eventId}`);
+    return { success: true };
+  } catch (error) {
+    console.error('Error reordering event images:', error);
+    if (error instanceof Error && (error.message.includes('Unauthorized') || error.message.includes('not found') || error.message.includes('not belong'))) {
+      return { error: error.message };
+    }
+    return { error: 'Failed to reorder images' };
+  }
+}
+
+/**
+ * Set or clear event thumbnail (tenant-scoped)
+ */
+export async function setEventThumbnailAction(tenantSubdomain: string, eventId: string, thumbnailUrl: string | null) {
+  try {
+    const { tenant } = await requireTenantOwner(tenantSubdomain);
+    await verifyEventBelongsToTenant(eventId, tenant.id);
+
+    const event = await prisma.event.update({
+      where: { id: eventId },
+      data: { thumbnailUrl },
+    });
+
+    revalidatePath(`/dashboard/${tenantSubdomain}/events/${eventId}`);
+    return { data: event };
+  } catch (error) {
+    console.error('Error setting event thumbnail:', error);
+    if (error instanceof Error && (error.message.includes('Unauthorized') || error.message.includes('not found') || error.message.includes('not belong'))) {
+      return { error: error.message };
+    }
+    return { error: 'Failed to set thumbnail' };
+  }
+}
+
+// ============================================================================
+// ATTENDEES / CHECK-IN
+// ============================================================================
+
+/**
+ * Get all attendees (tickets) for an event with stats
+ */
+export async function getAttendeesForEventAction(tenantSubdomain: string, eventId: string) {
+  try {
+    const { tenant } = await requireTenantAccess(tenantSubdomain, 'MANAGER');
+
+    await verifyEventBelongsToTenant(eventId, tenant.id);
+
+    const tickets = await prisma.ticket.findMany({
+      where: {
+        eventId,
+        order: { status: 'CONFIRMED' },
+      },
+      include: {
+        ticketType: { select: { id: true, name: true, kind: true } },
+        order: {
+          select: {
+            orderNumber: true,
+            user: {
+              select: { id: true, email: true, firstName: true, lastName: true },
+            },
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const total = tickets.length;
+    const checkedIn = tickets.filter((t) => t.status === 'CHECKED_IN').length;
+
+    return {
+      data: {
+        attendees: tickets,
+        stats: { total, checkedIn, remaining: total - checkedIn },
+      },
+    };
+  } catch (error) {
+    console.error('Error fetching attendees:', error);
+    if (error instanceof Error && (error.message.includes('Unauthorized') || error.message.includes('not found') || error.message.includes('not belong') || error.message.includes('not approved'))) {
+      return { error: error.message };
+    }
+    return { error: 'Failed to fetch attendees' };
+  }
+}
+
+/**
+ * Check in a ticket by its ticket code
+ */
+export async function checkInTicketAction(tenantSubdomain: string, ticketCode: string) {
+  try {
+    const { tenant } = await requireTenantAccess(tenantSubdomain, 'MANAGER');
+
+    const ticket = await prisma.ticket.findUnique({
+      where: { ticketCode },
+      include: {
+        event: { select: { id: true, tenantId: true, name: true } },
+        ticketType: { select: { name: true, kind: true } },
+      },
+    });
+
+    if (!ticket) {
+      return { error: 'Ticket not found' };
+    }
+
+    if (ticket.event.tenantId !== tenant.id) {
+      return { error: 'Ticket does not belong to this tenant' };
+    }
+
+    if (ticket.status === 'CHECKED_IN') {
+      return { error: 'Ticket has already been checked in' };
+    }
+
+    if (ticket.status !== 'ACTIVE') {
+      return { error: `Cannot check in ticket with status: ${ticket.status}` };
+    }
+
+    const updated = await prisma.ticket.update({
+      where: { id: ticket.id },
+      data: {
+        status: 'CHECKED_IN',
+        checkedInAt: new Date(),
+      },
+    });
+
+    const attendeeName = [ticket.holderFirstName, ticket.holderLastName]
+      .filter(Boolean)
+      .join(' ') || 'Guest';
+
+    revalidatePath(`/dashboard/${tenantSubdomain}/events/${ticket.eventId}`);
+
+    return {
+      data: {
+        ticketId: updated.id,
+        ticketCode: updated.ticketCode,
+        attendeeName,
+        ticketType: ticket.ticketType.name,
+        eventName: ticket.event.name,
+      },
+    };
+  } catch (error) {
+    console.error('Error checking in ticket:', error);
+    if (error instanceof Error && (error.message.includes('Unauthorized') || error.message.includes('not found') || error.message.includes('not approved'))) {
+      return { error: error.message };
+    }
+    return { error: 'Failed to check in ticket' };
+  }
+}
+
+/**
+ * Undo a ticket check-in (requires ADMIN role)
+ */
+export async function undoCheckInAction(tenantSubdomain: string, ticketId: string) {
+  try {
+    const { tenant } = await requireTenantAccess(tenantSubdomain, 'ADMIN');
+
+    const ticket = await prisma.ticket.findUnique({
+      where: { id: ticketId },
+      include: {
+        event: { select: { id: true, tenantId: true } },
+      },
+    });
+
+    if (!ticket) {
+      return { error: 'Ticket not found' };
+    }
+
+    if (ticket.event.tenantId !== tenant.id) {
+      return { error: 'Ticket does not belong to this tenant' };
+    }
+
+    if (ticket.status !== 'CHECKED_IN') {
+      return { error: 'Ticket is not checked in' };
+    }
+
+    await prisma.ticket.update({
+      where: { id: ticketId },
+      data: {
+        status: 'ACTIVE',
+        checkedInAt: null,
+      },
+    });
+
+    revalidatePath(`/dashboard/${tenantSubdomain}/events/${ticket.eventId}`);
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error undoing check-in:', error);
+    if (error instanceof Error && (error.message.includes('Unauthorized') || error.message.includes('not found') || error.message.includes('not approved'))) {
+      return { error: error.message };
+    }
+    return { error: 'Failed to undo check-in' };
+  }
+}
+
+// ============================================================================
+// ORDERS (Read-only for organizer dashboard)
+// ============================================================================
+
+/**
+ * Get confirmed orders for an event (organizer view)
+ */
+export async function getOrdersForEventAction(tenantSubdomain: string, eventId: string) {
+  try {
+    const { tenant } = await requireTenantAccess(tenantSubdomain, 'MANAGER');
+
+    await verifyEventBelongsToTenant(eventId, tenant.id);
+
+    const orders = await prisma.order.findMany({
+      where: {
+        eventId,
+        tenantId: tenant.id,
+        status: 'CONFIRMED',
+      },
+      include: {
+        user: {
+          select: { id: true, email: true, firstName: true, lastName: true },
+        },
+        items: {
+          include: {
+            ticketType: { select: { id: true, name: true, kind: true } },
+          },
+        },
+        tickets: {
+          select: {
+            id: true,
+            ticketCode: true,
+            status: true,
+            holderFirstName: true,
+            holderLastName: true,
+            holderEmail: true,
+            ticketType: { select: { name: true } },
+          },
+        },
+      },
+      orderBy: { completedAt: 'desc' },
+    });
+
+    // Summary stats
+    const totalOrders = orders.length;
+    const totalTickets = orders.reduce((sum, o) => sum + o.tickets.length, 0);
+    const totalRevenue = orders.reduce((sum, o) => sum + o.total, 0);
+
+    return {
+      data: {
+        orders,
+        stats: { totalOrders, totalTickets, totalRevenue },
+      },
+    };
+  } catch (error) {
+    console.error('Error fetching orders for event:', error);
+    if (error instanceof Error && (error.message.includes('Unauthorized') || error.message.includes('not found') || error.message.includes('not belong') || error.message.includes('not approved'))) {
+      return { error: error.message };
+    }
+    return { error: 'Failed to fetch orders' };
   }
 }

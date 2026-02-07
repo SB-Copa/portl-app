@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { getCurrentUser } from '@/lib/auth'
+import { mainUrl, tenantUrl } from '@/lib/url'
 import { prisma } from '@/lib/prisma'
 import { ProfileForm } from '@/components/profile/profile-form'
 import { PasswordForm } from '@/components/profile/password-form'
@@ -29,13 +30,13 @@ export default async function ProfilePage({
     const { tenant: subdomain } = await params
 
     if (!user) {
-        redirect(`/auth/signin?callbackUrl=/t/${subdomain}/profile`)
+        redirect(mainUrl(`/auth/signin?callbackUrl=${encodeURIComponent(tenantUrl(subdomain, '/profile'))}`))
     }
 
     const userDetails = await getUserDetails(user.id)
 
     if (!userDetails) {
-        redirect(`/auth/signin?callbackUrl=/t/${subdomain}/profile`)
+        redirect(mainUrl(`/auth/signin?callbackUrl=${encodeURIComponent(tenantUrl(subdomain, '/profile'))}`))
     }
 
     return (
@@ -71,9 +72,7 @@ export default async function ProfilePage({
                                 variant={
                                     user.role === 'ADMIN'
                                         ? 'destructive'
-                                        : user.role === 'ORGANIZER'
-                                            ? 'success'
-                                            : 'default'
+                                        : 'default'
                                 }
                             >
                                 <Shield className="h-3 w-3 mr-1" />

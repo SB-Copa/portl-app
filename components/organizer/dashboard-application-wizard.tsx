@@ -16,15 +16,17 @@ import { OrganizerApplication } from '@/prisma/generated/prisma/client';
 interface DashboardApplicationWizardProps {
   tenant: string;
   tenantId: string;
+  tenantName: string;
   initialApplication: OrganizerApplication | null;
   initialStep: number;
 }
 
-export function DashboardApplicationWizard({ 
-  tenant, 
-  tenantId, 
+export function DashboardApplicationWizard({
+  tenant,
+  tenantId,
+  tenantName,
   initialApplication,
-  initialStep: initialStepProp 
+  initialStep: initialStepProp
 }: DashboardApplicationWizardProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -103,113 +105,111 @@ export function DashboardApplicationWizard({
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
-        <div className="mb-6">
-          <Link
-            href={`/dashboard/${tenant}`}
-            className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 mb-4"
-          >
-            <ArrowLeft className="h-4 w-4 mr-1" />
-            Back to Dashboard
-          </Link>
-          <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-bold mb-2">Organizer Application</h1>
-            {!canEdit && (
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <Lock className="h-4 w-4" />
-                <span>Application locked</span>
-              </div>
-            )}
-          </div>
-          <p className="text-gray-600">
-            Complete all steps to submit your application
+    <div className="container mx-auto px-6 py-8 max-w-4xl space-y-6">
+      <div>
+        <Link
+          href={`/dashboard/${tenant}`}
+          className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-4"
+        >
+          <ArrowLeft className="h-4 w-4 mr-1" />
+          Back to Dashboard
+        </Link>
+        <div className="flex items-center gap-3">
+          <h1 className="text-3xl font-bold tracking-tight">Organizer Application</h1>
+          {!canEdit && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Lock className="h-4 w-4" />
+              <span>Application locked</span>
+            </div>
+          )}
+        </div>
+        <p className="text-muted-foreground mt-1">
+          Complete your application to become an approved event organizer for {tenantName}.
+        </p>
+      </div>
+
+      {!canEdit && (
+        <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4">
+          <p className="text-sm text-amber-200">
+            <strong>Application Under Review:</strong> Your application is currently being reviewed by our team.
+            You cannot make changes at this time.
           </p>
         </div>
+      )}
 
-        {!canEdit && (
-          <div className="mb-6 rounded-lg border border-blue-200 bg-blue-50 p-4">
-            <p className="text-sm text-blue-800">
-              <strong>Application Under Review:</strong> Your application is currently being reviewed by our team.
-              You cannot make changes at this time.
-            </p>
-          </div>
-        )}
-
-        <Card className="mb-6">
-          <CardContent className="pt-6">
-            <Stepper
-              steps={steps}
-              currentStep={currentStep}
-              onStepClick={(stepId) => {
-                if (canEdit && stepId <= (application?.currentStep || 1)) {
-                  setCurrentStep(stepId);
-                }
-              }}
-            />
-          </CardContent>
-        </Card>
-
-        {currentStep === 1 && (
-          <EventPortfolioForm
-            initialData={eventPortfolioData}
-            onSave={async (data) => {
-              await saveApplication(1, {
-                pastEvents: data.pastEvents,
-                venues: data.venues,
-                artistsTalent: data.artistsTalent,
-                references: data.references,
-              }, false);
-            }}
-            onSaveAndExit={async (data) => {
-              await saveApplication(1, {
-                pastEvents: data.pastEvents,
-                venues: data.venues,
-                artistsTalent: data.artistsTalent,
-                references: data.references,
-              }, true);
-            }}
-          />
-        )}
-
-        {currentStep === 2 && (
-          <IdentityVerificationForm
-            initialData={identityVerificationData}
-            onSave={async (data) => {
-              await saveApplication(2, data, false);
-            }}
-            onSaveAndExit={async (data) => {
-              await saveApplication(2, data, true);
-            }}
-          />
-        )}
-
-        {currentStep === 3 && (
-          <AgreementsForm
-            initialData={agreementsData}
-            onSubmit={async (data) => {
-              await saveApplication(3, data, false);
-            }}
-          />
-        )}
-
-        {currentStep === 4 && (
-          <ReviewForm
-            eventPortfolio={eventPortfolioData}
-            identityVerification={identityVerificationData}
-            agreements={agreementsData}
-            onEditStep={(step) => {
-              if (canEdit) {
-                setCurrentStep(step);
+      <Card>
+        <CardContent className="pt-6">
+          <Stepper
+            steps={steps}
+            currentStep={currentStep}
+            onStepClick={(stepId) => {
+              if (canEdit && stepId <= (application?.currentStep || 1)) {
+                setCurrentStep(stepId);
               }
             }}
-            onSubmit={async () => {
-              await saveApplication(4, {}, false);
-            }}
-            canEdit={canEdit}
           />
-        )}
-      </div>
+        </CardContent>
+      </Card>
+
+      {currentStep === 1 && (
+        <EventPortfolioForm
+          initialData={eventPortfolioData}
+          onSave={async (data) => {
+            await saveApplication(1, {
+              pastEvents: data.pastEvents,
+              venues: data.venues,
+              artistsTalent: data.artistsTalent,
+              references: data.references,
+            }, false);
+          }}
+          onSaveAndExit={async (data) => {
+            await saveApplication(1, {
+              pastEvents: data.pastEvents,
+              venues: data.venues,
+              artistsTalent: data.artistsTalent,
+              references: data.references,
+            }, true);
+          }}
+        />
+      )}
+
+      {currentStep === 2 && (
+        <IdentityVerificationForm
+          initialData={identityVerificationData}
+          onSave={async (data) => {
+            await saveApplication(2, data, false);
+          }}
+          onSaveAndExit={async (data) => {
+            await saveApplication(2, data, true);
+          }}
+        />
+      )}
+
+      {currentStep === 3 && (
+        <AgreementsForm
+          initialData={agreementsData}
+          onSubmit={async (data) => {
+            await saveApplication(3, data, false);
+          }}
+        />
+      )}
+
+      {currentStep === 4 && (
+        <ReviewForm
+          eventPortfolio={eventPortfolioData}
+          identityVerification={identityVerificationData}
+          agreements={agreementsData}
+          onEditStep={(step) => {
+            if (canEdit) {
+              setCurrentStep(step);
+            }
+          }}
+          onSubmit={async () => {
+            await saveApplication(4, {}, false);
+          }}
+          canEdit={canEdit}
+        />
+      )}
     </div>
   );
 }

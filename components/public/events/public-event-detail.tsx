@@ -3,12 +3,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, Calendar, Clock, MapPin } from 'lucide-react';
 import { TicketTypesDisplay } from './ticket-types-display';
-import type { Event, TicketType, TicketTypePriceTier } from '@/prisma/generated/prisma/client';
+import type { Event, EventImage, TicketType, TicketTypePriceTier } from '@/prisma/generated/prisma/client';
 
 type EventWithTicketTypes = Event & {
   ticketTypes: (TicketType & {
     priceTiers: TicketTypePriceTier[];
   })[];
+  images: EventImage[];
 };
 
 interface PublicEventDetailProps {
@@ -42,12 +43,26 @@ export function PublicEventDetail({ event, tenantSubdomain, tenantName }: Public
       {/* Back link */}
       <div>
         <Button variant="ghost" size="sm" asChild>
-          <Link href={`/t/${tenantSubdomain}/events`}>
+          <Link href="/events">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Events
           </Link>
         </Button>
       </div>
+
+      {/* Hero image */}
+      {(() => {
+        const heroUrl = event.thumbnailUrl || event.images?.[0]?.url;
+        return heroUrl ? (
+          <div className="aspect-[2/1] overflow-hidden rounded-xl">
+            <img
+              src={heroUrl}
+              alt={event.name}
+              className="h-full w-full object-cover"
+            />
+          </div>
+        ) : null;
+      })()}
 
       {/* Event header */}
       <div>
@@ -68,6 +83,24 @@ export function PublicEventDetail({ event, tenantSubdomain, tenantName }: Public
                 <p className="whitespace-pre-wrap">{event.description}</p>
               </CardContent>
             </Card>
+          )}
+
+          {/* Gallery */}
+          {event.images.length > 1 && (
+            <div>
+              <h2 className="text-xl font-semibold mb-4">Gallery</h2>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {event.images.map((image) => (
+                  <div key={image.id} className="aspect-[4/3] overflow-hidden rounded-lg">
+                    <img
+                      src={image.url}
+                      alt={event.name}
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
           )}
 
           {/* Tickets */}

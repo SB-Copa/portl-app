@@ -59,6 +59,16 @@ async function main() {
       include: { application: true },
     });
     console.log('✅ Created test tenant with approved application');
+
+    // Create OWNER membership
+    await prisma.tenantMember.create({
+      data: {
+        userId: testUser.id,
+        tenantId: testTenant.id,
+        role: 'OWNER',
+      },
+    });
+    console.log('✅ Created OWNER membership for test tenant');
   } else if (testTenant.application?.status !== 'APPROVED') {
     // Update existing tenant application to approved
     await prisma.organizerApplication.update({
@@ -75,6 +85,22 @@ async function main() {
     });
     console.log('✅ Updated tenant application to approved');
   }
+
+  // Ensure OWNER membership exists
+  await prisma.tenantMember.upsert({
+    where: {
+      userId_tenantId: {
+        userId: testUser.id,
+        tenantId: testTenant.id,
+      },
+    },
+    update: {},
+    create: {
+      userId: testUser.id,
+      tenantId: testTenant.id,
+      role: 'OWNER',
+    },
+  });
 
   // Create a sample event linked to the tenant
   const event = await prisma.event.create({

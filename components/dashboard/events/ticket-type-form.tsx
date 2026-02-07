@@ -16,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { FileUpload } from '@/components/ui/file-upload';
 import { Table } from '@/prisma/generated/prisma/client';
 
 interface TicketTypeFormProps {
@@ -24,10 +25,12 @@ interface TicketTypeFormProps {
   onSubmit: (data: TicketTypeFormData) => Promise<void>;
   onCancel: () => void;
   isEdit?: boolean;
+  quantitySold?: number;
 }
 
-export function TicketTypeForm({ tables, defaultValues, onSubmit, onCancel, isEdit }: TicketTypeFormProps) {
+export function TicketTypeForm({ tables, defaultValues, onSubmit, onCancel, isEdit, quantitySold }: TicketTypeFormProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const hasSales = (quantitySold ?? 0) > 0;
   const {
     register,
     handleSubmit,
@@ -43,6 +46,7 @@ export function TicketTypeForm({ tables, defaultValues, onSubmit, onCancel, isEd
       cancellable: false,
       basePrice: 0,
       tableId: null,
+      imageUrl: null,
     },
   });
 
@@ -71,6 +75,14 @@ export function TicketTypeForm({ tables, defaultValues, onSubmit, onCancel, isEd
 
   return (
     <form onSubmit={handleSubmit(onSubmitForm, onError)} className="space-y-4">
+      {hasSales && (
+        <div className="bg-amber-50 border border-amber-200 rounded-md p-3">
+          <p className="text-sm text-amber-800">
+            {quantitySold} ticket{quantitySold !== 1 ? 's' : ''} sold. Ticket kind and table assignment are locked.
+          </p>
+        </div>
+      )}
+
       <div className="space-y-2">
         <Label htmlFor="name">Ticket Type Name *</Label>
         <Input
@@ -100,6 +112,15 @@ export function TicketTypeForm({ tables, defaultValues, onSubmit, onCancel, isEd
         )}
       </div>
 
+      <FileUpload
+        label="Ticket Image"
+        description="Optional image shown on public ticket listing"
+        folder="ticket-types"
+        value={watch('imageUrl') || undefined}
+        onChange={(url) => setValue('imageUrl', url ?? null)}
+        disabled={isLoading}
+      />
+
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="kind">Ticket Kind *</Label>
@@ -118,7 +139,7 @@ export function TicketTypeForm({ tables, defaultValues, onSubmit, onCancel, isEd
               // Clear any existing errors
               trigger(['tableId', 'quantityTotal']);
             }}
-            disabled={isLoading}
+            disabled={isLoading || hasSales}
           >
             <SelectTrigger className={errors.kind ? 'border-red-500' : ''}>
               <SelectValue placeholder="Select kind" />
@@ -169,7 +190,7 @@ export function TicketTypeForm({ tables, defaultValues, onSubmit, onCancel, isEd
               <Select
                 value={watch('tableId') || ''}
                 onValueChange={(value) => setValue('tableId', value)}
-                disabled={isLoading}
+                disabled={isLoading || hasSales}
               >
                 <SelectTrigger className={errors.tableId ? 'border-red-500' : ''}>
                   <SelectValue placeholder="Select a table" />
@@ -219,6 +240,11 @@ export function TicketTypeForm({ tables, defaultValues, onSubmit, onCancel, isEd
           />
           {errors.quantityTotal && (
             <p className="text-sm text-red-600">{errors.quantityTotal.message}</p>
+          )}
+          {hasSales && (
+            <p className="text-xs text-muted-foreground">
+              Minimum {quantitySold} (tickets already sold)
+            </p>
           )}
         </div>
       )}

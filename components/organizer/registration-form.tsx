@@ -196,11 +196,11 @@ export function RegistrationForm() {
                 className={errors.subdomain ? 'border-red-500' : ''}
                 placeholder="acme-events"
               />
-              <span className="text-sm text-gray-500 whitespace-nowrap">
+              <span className="text-sm text-muted-foreground whitespace-nowrap">
                 .portl.com
               </span>
             </div>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-muted-foreground">
               Auto-generated from your business name. You can edit it if needed.
             </p>
             {errors.subdomain && (
@@ -251,7 +251,7 @@ export function RegistrationForm() {
                 <Label htmlFor="sameAsBusinessContact" className="cursor-pointer font-medium">
                   Same as business contact information
                 </Label>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-muted-foreground">
                   Use the same email and phone for contact information
                 </p>
               </div>

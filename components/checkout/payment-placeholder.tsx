@@ -51,7 +51,7 @@ export function PaymentPlaceholder({
       }
 
       // Redirect to success page
-      router.push(`/t/${tenantSubdomain}/checkout/success/${order.id}`);
+      router.push(`/checkout/success/${order.id}`);
     });
   };
 

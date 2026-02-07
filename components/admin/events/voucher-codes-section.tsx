@@ -61,7 +61,7 @@ export function VoucherCodesSection({ promotion }: VoucherCodesSectionProps) {
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-xl font-semibold">{promotion.name} - Voucher Codes</h3>
-          <p className="text-sm text-gray-600 mt-1">
+          <p className="text-sm text-muted-foreground mt-1">
             Manage voucher codes for this promotion
           </p>
         </div>
@@ -91,7 +91,7 @@ export function VoucherCodesSection({ promotion }: VoucherCodesSectionProps) {
       {promotion.voucherCodes.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
-            <p className="text-gray-600 mb-4 text-center">
+            <p className="text-muted-foreground mb-4 text-center">
               No voucher codes created yet. Create your first voucher code to get started.
             </p>
             <Button onClick={() => setCreateDialogOpen(true)}>
@@ -142,9 +142,9 @@ export function VoucherCodesSection({ promotion }: VoucherCodesSectionProps) {
                       </TableCell>
                       <TableCell>
                         {isExhausted ? (
-                          <Badge className="bg-red-100 text-red-800">Exhausted</Badge>
+                          <Badge className="bg-red-500/20 text-red-400">Exhausted</Badge>
                         ) : (
-                          <Badge className="bg-green-100 text-green-800">Active</Badge>
+                          <Badge className="bg-green-500/20 text-green-400">Active</Badge>
                         )}
                       </TableCell>
                       <TableCell>

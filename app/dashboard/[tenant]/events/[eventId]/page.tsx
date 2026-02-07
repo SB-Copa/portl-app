@@ -6,7 +6,8 @@ import { EventStatsCards } from '@/components/dashboard/events/event-stats-cards
 import { EventSubNav } from '@/components/dashboard/events/event-sub-nav';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
-import { ArrowLeft, Calendar, MapPin, Clock, Info } from 'lucide-react';
+import { ArrowLeft, Calendar, MapPin, Clock, Info, ImageIcon, UserCheck } from 'lucide-react';
+import { QuickCheckIn } from '@/components/dashboard/events/quick-check-in';
 
 export default async function EventDetailPage({
   params,
@@ -27,6 +28,17 @@ export default async function EventDetailPage({
   }
 
   const event = result.data;
+
+  // Get order and attendee counts for sub-nav
+  const { prisma } = await import('@/lib/prisma');
+  const [orderCount, attendeeCount] = await Promise.all([
+    prisma.order.count({
+      where: { eventId, tenantId: event.tenantId, status: 'CONFIRMED' },
+    }),
+    prisma.ticket.count({
+      where: { eventId, order: { status: 'CONFIRMED' } },
+    }),
+  ]);
 
   const formatDate = (date: Date) => {
     return new Date(date).toLocaleDateString('en-US', {
@@ -61,6 +73,9 @@ export default async function EventDetailPage({
           tables: event.tables.length,
           ticketTypes: event.ticketTypes.length,
           promotions: event.promotions.length,
+          images: event.images.length,
+          orders: orderCount,
+          attendees: attendeeCount,
         }}
       />
 
@@ -139,6 +154,9 @@ export default async function EventDetailPage({
         </Card>
       </div>
 
+      {/* Quick Check-in */}
+      <QuickCheckIn tenantSubdomain={subdomain} eventId={eventId} />
+
       {/* Quick Links */}
       <Card>
         <CardHeader>
@@ -146,7 +164,22 @@ export default async function EventDetailPage({
           <CardDescription>Manage your event configuration</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <Link
+              href={`/dashboard/${subdomain}/events/${eventId}/gallery`}
+              className="flex items-center gap-3 p-4 border rounded-lg hover:bg-accent transition-colors"
+            >
+              <div className="p-2 rounded-full bg-primary/10">
+                <ImageIcon className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <h4 className="font-medium">Gallery</h4>
+                <p className="text-sm text-muted-foreground">
+                  {event.images.length} image{event.images.length !== 1 ? 's' : ''}
+                </p>
+              </div>
+            </Link>
+
             <Link
               href={`/dashboard/${subdomain}/events/${eventId}/tables`}
               className="flex items-center gap-3 p-4 border rounded-lg hover:bg-accent transition-colors"

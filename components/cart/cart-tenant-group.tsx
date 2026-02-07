@@ -1,10 +1,10 @@
 'use client';
 
-import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { CartItem } from './cart-item';
 import { useCart } from './cart-provider';
+import { tenantUrl } from '@/lib/url';
 import type { TenantCartGroup } from '@/app/actions/cart';
 
 interface CartTenantGroupProps {
@@ -38,9 +38,9 @@ export function CartTenantGroup({ group }: CartTenantGroupProps) {
       </div>
 
       <Button asChild className="w-full" onClick={closeCart}>
-        <Link href={`/t/${group.tenant.subdomain}/checkout`}>
+        <a href={tenantUrl(group.tenant.subdomain, '/checkout')}>
           Checkout
-        </Link>
+        </a>
       </Button>
 
       <Separator className="mt-4" />

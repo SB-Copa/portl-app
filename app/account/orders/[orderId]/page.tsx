@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { ArrowLeft, Calendar, MapPin, Ticket, ExternalLink } from 'lucide-react'
+import { tenantUrl } from '@/lib/url'
 import { getOrderByIdAction } from '@/app/actions/orders'
 
 interface OrderDetailPageProps {
@@ -119,10 +120,10 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
                                 </div>
                             </div>
                             <Button variant="outline" size="sm" asChild>
-                                <Link href={`/t/${order.tenant.subdomain}/events/${order.eventId}`}>
+                                <a href={tenantUrl(order.tenant.subdomain, `/events/${order.eventId}`)}>
                                     <ExternalLink className="mr-2 h-4 w-4" />
                                     View Event
-                                </Link>
+                                </a>
                             </Button>
                         </CardContent>
                     </Card>

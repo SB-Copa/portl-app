@@ -14,7 +14,17 @@ async function getTenantEvents(userId: string, subdomain: string) {
     },
   });
 
-  if (!tenant || tenant.ownerId !== userId) {
+  if (!tenant) {
+    return null;
+  }
+
+  const membership = await prisma.tenantMember.findUnique({
+    where: {
+      userId_tenantId: { userId, tenantId: tenant.id },
+    },
+  });
+
+  if (!membership) {
     return null;
   }
 
@@ -36,7 +46,7 @@ export default async function EventsPage({
   const tenant = await getTenantEvents(user.id, subdomain);
 
   if (!tenant) {
-    redirect('/dashboard');
+    redirect('/account');
   }
 
   const isApproved = tenant.application?.status === 'APPROVED';

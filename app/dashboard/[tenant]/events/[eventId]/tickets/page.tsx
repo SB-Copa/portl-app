@@ -51,6 +51,7 @@ export default async function TicketsPage({
           tables: event.tables.length,
           ticketTypes: event.ticketTypes.length,
           promotions: event.promotions.length,
+          images: event.images.length,
         }}
       />
 

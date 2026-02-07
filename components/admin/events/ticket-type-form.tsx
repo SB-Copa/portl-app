@@ -73,7 +73,7 @@ export function TicketTypeForm({ eventId, tables, defaultValues, onSubmit, onCan
           className={errors.name ? 'border-red-500' : ''}
         />
         {errors.name && (
-          <p className="text-sm text-red-600">{errors.name.message}</p>
+          <p className="text-sm text-destructive">{errors.name.message}</p>
         )}
       </div>
 
@@ -87,7 +87,7 @@ export function TicketTypeForm({ eventId, tables, defaultValues, onSubmit, onCan
           className={errors.description ? 'border-red-500' : ''}
         />
         {errors.description && (
-          <p className="text-sm text-red-600">{errors.description.message}</p>
+          <p className="text-sm text-destructive">{errors.description.message}</p>
         )}
       </div>
 
@@ -108,7 +108,7 @@ export function TicketTypeForm({ eventId, tables, defaultValues, onSubmit, onCan
           </SelectContent>
         </Select>
         {errors.kind && (
-          <p className="text-sm text-red-600">{errors.kind.message}</p>
+          <p className="text-sm text-destructive">{errors.kind.message}</p>
         )}
       </div>
 
@@ -123,7 +123,7 @@ export function TicketTypeForm({ eventId, tables, defaultValues, onSubmit, onCan
           className={errors.basePrice ? 'border-red-500' : ''}
         />
         {errors.basePrice && (
-          <p className="text-sm text-red-600">{errors.basePrice.message}</p>
+          <p className="text-sm text-destructive">{errors.basePrice.message}</p>
         )}
       </div>
 
@@ -147,7 +147,7 @@ export function TicketTypeForm({ eventId, tables, defaultValues, onSubmit, onCan
             </SelectContent>
           </Select>
           {errors.tableId && (
-            <p className="text-sm text-red-600">{errors.tableId.message}</p>
+            <p className="text-sm text-destructive">{errors.tableId.message}</p>
           )}
         </div>
       )}
@@ -164,7 +164,7 @@ export function TicketTypeForm({ eventId, tables, defaultValues, onSubmit, onCan
             className={errors.quantityTotal ? 'border-red-500' : ''}
           />
           {errors.quantityTotal && (
-            <p className="text-sm text-red-600">{errors.quantityTotal.message}</p>
+            <p className="text-sm text-destructive">{errors.quantityTotal.message}</p>
           )}
         </div>
       )}

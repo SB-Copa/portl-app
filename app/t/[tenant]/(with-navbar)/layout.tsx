@@ -24,6 +24,7 @@ export default async function TenantWithNavbarLayout({
             <TenantNavbar
                 tenantSubdomain={subdomain}
                 tenantName={tenant.name}
+                tenantLogoUrl={tenant.logoUrl ?? undefined}
             />
             <main className="pt-16">
                 {children}

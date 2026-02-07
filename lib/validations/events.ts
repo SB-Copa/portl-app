@@ -11,6 +11,7 @@ export const eventSchema = z.object({
   endDate: z.string().min(1, 'End date is required'),
   endTime: z.string().min(1, 'End time is required'),
   status: z.enum(['DRAFT', 'PUBLISHED', 'ARCHIVED']),
+  thumbnailUrl: z.string().url().optional().nullable(),
 }).refine((data) => {
   const startDateTime = new Date(`${data.startDate}T${data.startTime}`);
   const endDateTime = new Date(`${data.endDate}T${data.endTime}`);
@@ -54,17 +55,11 @@ export const ticketTypeSchema = z.object({
   description: z.string().optional(),
   kind: z.enum(['GENERAL', 'TABLE', 'SEAT']),
   basePrice: z.number().int().nonnegative('Price must be non-negative'),
-  quantityTotal: z.preprocess(
-    (val) => {
-      if (val === '' || val === null || val === undefined) return undefined;
-      const num = Number(val);
-      return isNaN(num) ? undefined : num;
-    },
-    z.number().int().positive().optional()
-  ),
+  quantityTotal: z.number().int().positive().optional(),
   transferrable: z.boolean(),
   cancellable: z.boolean(),
   tableId: z.string().optional().nullable(),
+  imageUrl: z.string().url().optional().nullable(),
 }).refine((data) => {
   if (data.kind === 'TABLE' || data.kind === 'SEAT') {
     return !!data.tableId;

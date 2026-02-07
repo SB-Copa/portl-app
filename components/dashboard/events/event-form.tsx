@@ -15,6 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { FileUpload } from '@/components/ui/file-upload';
 import { CheckCircle2, AlertCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
@@ -85,6 +86,15 @@ export function EventForm({ tenantSubdomain, defaultValues, eventId, onSubmit }:
           </div>
         </div>
       )}
+
+      <FileUpload
+        label="Event Thumbnail"
+        description="Optional. If not set, the first gallery image will be used."
+        folder="events/thumbnails"
+        value={watch('thumbnailUrl') || undefined}
+        onChange={(url) => setValue('thumbnailUrl', url ?? null)}
+        disabled={isLoading}
+      />
 
       <div className="space-y-2">
         <Label htmlFor="name">Event Name *</Label>

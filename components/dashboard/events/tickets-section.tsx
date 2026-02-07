@@ -15,10 +15,11 @@ import {
 } from '@/components/ui/dialog';
 import { TicketTypeForm } from './ticket-type-form';
 import { PriceTiersSection } from './price-tiers-section';
-import { Plus, Trash2, Tag, Ticket } from 'lucide-react';
+import { Plus, Trash2, Tag, Ticket, Pencil } from 'lucide-react';
 import { Event, Prisma } from '@/prisma/generated/prisma/client';
 import {
   createTicketTypeForTenantAction,
+  updateTicketTypeForTenantAction,
   deleteTicketTypeForTenantAction,
 } from '@/app/actions/tenant-events';
 import { toast } from 'sonner';
@@ -62,6 +63,7 @@ const kindColors = {
 export function TicketsSection({ event, tenantSubdomain }: TicketsSectionProps) {
   const router = useRouter();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [editingTicketType, setEditingTicketType] = useState<string | null>(null);
   const [priceTiersDialogOpen, setPriceTiersDialogOpen] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
 
@@ -80,6 +82,23 @@ export function TicketsSection({ event, tenantSubdomain }: TicketsSectionProps) 
     } catch (error) {
       console.error('Error calling server action:', error);
       toast.error('Failed to create ticket type');
+    }
+  };
+
+  const handleUpdateTicketType = async (data: TicketTypeFormData) => {
+    if (!editingTicketType) return;
+    try {
+      const result = await updateTicketTypeForTenantAction(tenantSubdomain, editingTicketType, data);
+      if (result.error) {
+        toast.error(result.error);
+      } else {
+        toast.success('Ticket type updated successfully');
+        setEditingTicketType(null);
+        router.refresh();
+      }
+    } catch (error) {
+      console.error('Error updating ticket type:', error);
+      toast.error('Failed to update ticket type');
     }
   };
 
@@ -212,6 +231,13 @@ export function TicketsSection({ event, tenantSubdomain }: TicketsSectionProps) 
                         <Button
                           variant="ghost"
                           size="sm"
+                          onClick={() => setEditingTicketType(ticketType.id)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           onClick={() => setPriceTiersDialogOpen(ticketType.id)}
                         >
                           <Tag className="h-4 w-4" />
@@ -220,8 +246,9 @@ export function TicketsSection({ event, tenantSubdomain }: TicketsSectionProps) 
                           variant="ghost"
                           size="sm"
                           onClick={() => handleDeleteTicketType(ticketType.id)}
-                          disabled={isDeleting === ticketType.id}
+                          disabled={isDeleting === ticketType.id || ticketType.quantitySold > 0}
                           className="text-destructive hover:text-destructive"
+                          title={ticketType.quantitySold > 0 ? `Cannot delete: ${ticketType.quantitySold} tickets sold` : 'Delete ticket type'}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -234,6 +261,45 @@ export function TicketsSection({ event, tenantSubdomain }: TicketsSectionProps) 
           </CardContent>
         </Card>
       )}
+
+      {/* Edit Ticket Type Dialog */}
+      {editingTicketType && (() => {
+        const ticketType = event.ticketTypes.find((tt) => tt.id === editingTicketType);
+        if (!ticketType) return null;
+        return (
+          <Dialog
+            open={!!editingTicketType}
+            onOpenChange={(open) => !open && setEditingTicketType(null)}
+          >
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Edit Ticket Type</DialogTitle>
+                <DialogDescription>
+                  Update the details for this ticket type
+                </DialogDescription>
+              </DialogHeader>
+              <TicketTypeForm
+                tables={event.tables}
+                defaultValues={{
+                  name: ticketType.name,
+                  description: ticketType.description || undefined,
+                  kind: ticketType.kind,
+                  basePrice: ticketType.basePrice,
+                  quantityTotal: ticketType.quantityTotal ?? undefined,
+                  tableId: ticketType.tableId,
+                  transferrable: ticketType.transferrable,
+                  cancellable: ticketType.cancellable,
+                  imageUrl: ticketType.imageUrl,
+                }}
+                onSubmit={handleUpdateTicketType}
+                onCancel={() => setEditingTicketType(null)}
+                isEdit
+                quantitySold={ticketType.quantitySold}
+              />
+            </DialogContent>
+          </Dialog>
+        );
+      })()}
 
       {/* Price Tiers Dialog */}
       {priceTiersDialogOpen && (

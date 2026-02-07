@@ -20,6 +20,10 @@ model Order {
   contactEmail   String
   contactPhone   String?
 
+  // Payment
+  metadata          Json?       // Store attendee data, payment session info
+  paymentSessionId  String?     // PayMongo checkout session ID (cs_xxx)
+
   expiresAt      DateTime?   // For PENDING orders (time limit to complete)
   completedAt    DateTime?
   cancelledAt    DateTime?
@@ -42,6 +46,7 @@ model Order {
   @@index([status])
   @@index([orderNumber])
   @@index([expiresAt])
+  @@index([paymentSessionId])
   @@map("orders")
 }
 

@@ -74,7 +74,7 @@ export function PromotionsSection({ event }: PromotionsSectionProps) {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-semibold">Promotions</h2>
-          <p className="text-sm text-gray-600 mt-1">
+          <p className="text-sm text-muted-foreground mt-1">
             Manage promotions and voucher codes for this event
           </p>
         </div>
@@ -105,7 +105,7 @@ export function PromotionsSection({ event }: PromotionsSectionProps) {
       {event.promotions.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
-            <p className="text-gray-600 mb-4 text-center">
+            <p className="text-muted-foreground mb-4 text-center">
               No promotions created yet. Create your first promotion to get started.
             </p>
             <Button onClick={() => setCreateDialogOpen(true)}>
@@ -158,7 +158,7 @@ export function PromotionsSection({ event }: PromotionsSectionProps) {
                     <TableCell>
                       <div className="text-sm">
                         <div>{new Date(promotion.validFrom).toLocaleDateString()}</div>
-                        <div className="text-gray-500">to {new Date(promotion.validUntil).toLocaleDateString()}</div>
+                        <div className="text-muted-foreground">to {new Date(promotion.validUntil).toLocaleDateString()}</div>
                       </div>
                     </TableCell>
                     <TableCell>
@@ -174,7 +174,7 @@ export function PromotionsSection({ event }: PromotionsSectionProps) {
                       {promotion.ticketTypes.length > 0 ? (
                         <span className="text-sm">{promotion.ticketTypes.length} type{promotion.ticketTypes.length !== 1 ? 's' : ''}</span>
                       ) : (
-                        <span className="text-sm text-gray-400">All types</span>
+                        <span className="text-sm text-muted-foreground">All types</span>
                       )}
                     </TableCell>
                     <TableCell>

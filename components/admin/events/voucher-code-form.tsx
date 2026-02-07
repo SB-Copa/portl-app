@@ -48,9 +48,9 @@ export function VoucherCodeForm({ promotionId, defaultValues, onSubmit, onCancel
           style={{ textTransform: 'uppercase' }}
         />
         {errors.code && (
-          <p className="text-sm text-red-600">{errors.code.message}</p>
+          <p className="text-sm text-destructive">{errors.code.message}</p>
         )}
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-muted-foreground">
           Code will be converted to uppercase. Only letters, numbers, hyphens, and underscores allowed.
         </p>
       </div>
@@ -66,9 +66,9 @@ export function VoucherCodeForm({ promotionId, defaultValues, onSubmit, onCancel
           className={errors.maxRedemptions ? 'border-red-500' : ''}
         />
         {errors.maxRedemptions && (
-          <p className="text-sm text-red-600">{errors.maxRedemptions.message}</p>
+          <p className="text-sm text-destructive">{errors.maxRedemptions.message}</p>
         )}
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-muted-foreground">
           Leave empty for unlimited redemptions (subject to promotion limits)
         </p>
       </div>

@@ -81,18 +81,18 @@ export function ReviewForm({
           {/* Event Portfolio Section */}
           <div className="border rounded-lg">
             <div
-              className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50"
+              className="flex items-center justify-between p-4 cursor-pointer hover:bg-muted/50"
               onClick={() => toggleSection('event-portfolio')}
             >
               <div className="flex items-center gap-3">
                 {isComplete('event-portfolio') ? (
                   <CheckCircle2 className="h-5 w-5 text-green-600" />
                 ) : (
-                  <XCircle className="h-5 w-5 text-gray-400" />
+                  <XCircle className="h-5 w-5 text-muted-foreground" />
                 )}
                 <div>
                   <h3 className="font-medium">Event Portfolio</h3>
-                  <p className="text-sm text-gray-500">Past events, venues, artists, and references</p>
+                  <p className="text-sm text-muted-foreground">Past events, venues, artists, and references</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -121,7 +121,7 @@ export function ReviewForm({
               </div>
             </div>
             {expandedSections.has('event-portfolio') && (
-              <div className="p-4 border-t bg-gray-50">
+              <div className="p-4 border-t bg-muted/50">
                 {eventPortfolio ? (
                   <div className="space-y-3 text-sm">
                     {eventPortfolio.pastEvents && eventPortfolio.pastEvents.length > 0 && (
@@ -148,11 +148,11 @@ export function ReviewForm({
                       !eventPortfolio.venues?.length &&
                       !eventPortfolio.artistsTalent &&
                       !eventPortfolio.references?.length && (
-                        <p className="text-gray-500 italic">No portfolio information provided</p>
+                        <p className="text-muted-foreground italic">No portfolio information provided</p>
                       )}
                   </div>
                 ) : (
-                  <p className="text-sm text-gray-500 italic">No portfolio information provided</p>
+                  <p className="text-sm text-muted-foreground italic">No portfolio information provided</p>
                 )}
               </div>
             )}
@@ -161,18 +161,18 @@ export function ReviewForm({
           {/* Identity Verification Section */}
           <div className="border rounded-lg">
             <div
-              className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50"
+              className="flex items-center justify-between p-4 cursor-pointer hover:bg-muted/50"
               onClick={() => toggleSection('identity')}
             >
               <div className="flex items-center gap-3">
                 {isComplete('identity') ? (
                   <CheckCircle2 className="h-5 w-5 text-green-600" />
                 ) : (
-                  <XCircle className="h-5 w-5 text-gray-400" />
+                  <XCircle className="h-5 w-5 text-muted-foreground" />
                 )}
                 <div>
                   <h3 className="font-medium">Identity Verification</h3>
-                  <p className="text-sm text-gray-500">Government ID, selfie, and business documents</p>
+                  <p className="text-sm text-muted-foreground">Government ID, selfie, and business documents</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -201,7 +201,7 @@ export function ReviewForm({
               </div>
             </div>
             {expandedSections.has('identity') && (
-              <div className="p-4 border-t bg-gray-50">
+              <div className="p-4 border-t bg-muted/50">
                 {identityVerification ? (
                   <div className="space-y-2 text-sm">
                     <div>
@@ -225,12 +225,12 @@ export function ReviewForm({
                       {identityVerification.businessIdUrl ? (
                         <span className="text-green-600">✓ Provided</span>
                       ) : (
-                        <span className="text-gray-500">Optional - Not provided</span>
+                        <span className="text-muted-foreground">Optional - Not provided</span>
                       )}
                     </div>
                   </div>
                 ) : (
-                  <p className="text-sm text-gray-500 italic">No identity verification documents provided</p>
+                  <p className="text-sm text-muted-foreground italic">No identity verification documents provided</p>
                 )}
               </div>
             )}
@@ -239,18 +239,18 @@ export function ReviewForm({
           {/* Agreements Section */}
           <div className="border rounded-lg">
             <div
-              className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50"
+              className="flex items-center justify-between p-4 cursor-pointer hover:bg-muted/50"
               onClick={() => toggleSection('agreements')}
             >
               <div className="flex items-center gap-3">
                 {isComplete('agreements') ? (
                   <CheckCircle2 className="h-5 w-5 text-green-600" />
                 ) : (
-                  <XCircle className="h-5 w-5 text-gray-400" />
+                  <XCircle className="h-5 w-5 text-muted-foreground" />
                 )}
                 <div>
                   <h3 className="font-medium">Agreements</h3>
-                  <p className="text-sm text-gray-500">Terms of Service, Organizer Agreement, Privacy Policy, Community Guidelines</p>
+                  <p className="text-sm text-muted-foreground">Terms of Service, Organizer Agreement, Privacy Policy, Community Guidelines</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -279,7 +279,7 @@ export function ReviewForm({
               </div>
             </div>
             {expandedSections.has('agreements') && (
-              <div className="p-4 border-t bg-gray-50">
+              <div className="p-4 border-t bg-muted/50">
                 {agreements ? (
                   <div className="space-y-2 text-sm">
                     <div>
@@ -316,7 +316,7 @@ export function ReviewForm({
                     </div>
                   </div>
                 ) : (
-                  <p className="text-sm text-gray-500 italic">No agreements accepted</p>
+                  <p className="text-sm text-muted-foreground italic">No agreements accepted</p>
                 )}
               </div>
             )}
@@ -325,16 +325,16 @@ export function ReviewForm({
       </Card>
 
       {!canSubmit && (
-        <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4">
-          <p className="text-sm text-yellow-800">
+        <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4">
+          <p className="text-sm text-amber-200">
             <strong>Please complete all sections</strong> before submitting your application.
           </p>
         </div>
       )}
 
       {!canEdit && (
-        <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
-          <p className="text-sm text-blue-800">
+        <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4">
+          <p className="text-sm text-amber-200">
             <strong>Application Under Review:</strong> Your application is currently being reviewed by our team.
             You cannot make changes at this time.
           </p>

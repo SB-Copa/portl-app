@@ -64,8 +64,8 @@ export function BulkTableForm({ eventId, onSubmit, onCancel }: BulkTableFormProp
 
   return (
     <form onSubmit={handleSubmit(onSubmitForm)} className="space-y-4">
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <p className="text-sm text-blue-800">
+      <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
+        <p className="text-sm text-blue-400">
           This will create tables from {prefix}{startNumber} to {prefix}{endNumber} ({endNumber - startNumber + 1} tables total)
         </p>
       </div>
@@ -81,7 +81,7 @@ export function BulkTableForm({ eventId, onSubmit, onCancel }: BulkTableFormProp
             className={errors.prefix ? 'border-red-500' : ''}
           />
           {errors.prefix && (
-            <p className="text-sm text-red-600">{errors.prefix.message}</p>
+            <p className="text-sm text-destructive">{errors.prefix.message}</p>
           )}
         </div>
 
@@ -96,7 +96,7 @@ export function BulkTableForm({ eventId, onSubmit, onCancel }: BulkTableFormProp
               className={errors.startNumber ? 'border-red-500' : ''}
             />
             {errors.startNumber && (
-              <p className="text-sm text-red-600">{errors.startNumber.message}</p>
+              <p className="text-sm text-destructive">{errors.startNumber.message}</p>
             )}
           </div>
 
@@ -110,7 +110,7 @@ export function BulkTableForm({ eventId, onSubmit, onCancel }: BulkTableFormProp
               className={errors.endNumber ? 'border-red-500' : ''}
             />
             {errors.endNumber && (
-              <p className="text-sm text-red-600">{errors.endNumber.message}</p>
+              <p className="text-sm text-destructive">{errors.endNumber.message}</p>
             )}
           </div>
         </div>
@@ -127,7 +127,7 @@ export function BulkTableForm({ eventId, onSubmit, onCancel }: BulkTableFormProp
             className={errors.capacity ? 'border-red-500' : ''}
           />
           {errors.capacity && (
-            <p className="text-sm text-red-600">{errors.capacity.message}</p>
+            <p className="text-sm text-destructive">{errors.capacity.message}</p>
           )}
         </div>
 
@@ -147,7 +147,7 @@ export function BulkTableForm({ eventId, onSubmit, onCancel }: BulkTableFormProp
             </SelectContent>
           </Select>
           {errors.mode && (
-            <p className="text-sm text-red-600">{errors.mode.message}</p>
+            <p className="text-sm text-destructive">{errors.mode.message}</p>
           )}
         </div>
       </div>
@@ -163,7 +163,7 @@ export function BulkTableForm({ eventId, onSubmit, onCancel }: BulkTableFormProp
           className={errors.minSpend ? 'border-red-500' : ''}
         />
         {errors.minSpend && (
-          <p className="text-sm text-red-600">{errors.minSpend.message}</p>
+          <p className="text-sm text-destructive">{errors.minSpend.message}</p>
         )}
       </div>
 

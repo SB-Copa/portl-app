@@ -11,7 +11,18 @@ async function getApplication(userId: string, subdomain: string) {
     },
   })
 
-  if (!tenant || tenant.ownerId !== userId) {
+  if (!tenant) {
+    return null
+  }
+
+  const membership = await prisma.tenantMember.findUnique({
+    where: {
+      userId_tenantId: { userId, tenantId: tenant.id },
+    },
+  })
+
+  // Only OWNERs can manage applications
+  if (!membership || membership.role !== 'OWNER') {
     return null
   }
 
@@ -36,7 +47,7 @@ export default async function ApplyPage({
   const data = await getApplication(user.id, subdomain)
 
   if (!data) {
-    redirect('/dashboard')
+    redirect('/account')
   }
 
   const { tenant, application } = data
@@ -49,20 +60,12 @@ export default async function ApplyPage({
   const initialStep = step ? parseInt(step) : application?.currentStep || 1
 
   return (
-    <div className="container mx-auto px-6 py-8 max-w-4xl">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight">Organizer Application</h1>
-        <p className="text-muted-foreground mt-1">
-          Complete your application to become an approved event organizer for {tenant.name}.
-        </p>
-      </div>
-
-      <DashboardApplicationWizard
-        tenantId={tenant.id}
-        tenant={subdomain}
-        initialStep={initialStep}
-        initialApplication={application}
-      />
-    </div>
+    <DashboardApplicationWizard
+      tenantId={tenant.id}
+      tenant={subdomain}
+      tenantName={tenant.name}
+      initialStep={initialStep}
+      initialApplication={application}
+    />
   )
 }

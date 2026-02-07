@@ -3,6 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { CheckCircle, Calendar, MapPin, Ticket, ExternalLink } from 'lucide-react';
+import { TicketQRCode } from '@/components/ui/ticket-qr-code';
+import { mainUrl } from '@/lib/url';
 import type { OrderWithRelations } from '@/app/actions/checkout';
 
 interface CheckoutSuccessProps {
@@ -62,24 +64,20 @@ export function CheckoutSuccess({ order, tenantSubdomain }: CheckoutSuccessProps
             {order.tickets.map((ticket, index) => (
               <div
                 key={ticket.id}
-                className="flex items-center justify-between p-3 bg-muted rounded-lg"
+                className="flex items-center gap-3 p-3 bg-muted rounded-lg"
               >
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Ticket className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <p className="font-medium">{ticket.ticketType.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {ticket.holderFirstName
-                        ? `${ticket.holderFirstName} ${ticket.holderLastName}`
-                        : 'Attendee not assigned'}
-                    </p>
-                  </div>
+                <TicketQRCode value={ticket.ticketCode} size={64} />
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium">{ticket.ticketType.name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {ticket.holderFirstName
+                      ? `${ticket.holderFirstName} ${ticket.holderLastName}`
+                      : 'Attendee not assigned'}
+                  </p>
+                  <code className="text-xs bg-background px-2 py-1 rounded mt-1 inline-block">
+                    {ticket.ticketCode}
+                  </code>
                 </div>
-                <code className="text-xs bg-background px-2 py-1 rounded">
-                  {ticket.ticketCode}
-                </code>
               </div>
             ))}
           </div>
@@ -124,13 +122,13 @@ export function CheckoutSuccess({ order, tenantSubdomain }: CheckoutSuccessProps
       {/* Actions */}
       <div className="flex flex-col sm:flex-row gap-4">
         <Button asChild className="flex-1">
-          <Link href="/account/tickets">
+          <a href={mainUrl('/account/tickets')}>
             <Ticket className="mr-2 h-4 w-4" />
             View My Tickets
-          </Link>
+          </a>
         </Button>
         <Button variant="outline" asChild className="flex-1">
-          <Link href={`/t/${tenantSubdomain}/events`}>
+          <Link href="/events">
             <ExternalLink className="mr-2 h-4 w-4" />
             Browse More Events
           </Link>

@@ -7,10 +7,17 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { User, Shield, Ticket, Receipt, Settings, Plus } from 'lucide-react'
 import Link from 'next/link'
+import { AffiliationsSection } from '@/components/account/affiliations-section'
 
-async function getUserTenantCount(userId: string): Promise<number> {
-    return await prisma.tenant.count({
-        where: { ownerId: userId },
+async function getUserAffiliations(userId: string) {
+    return await prisma.tenantMember.findMany({
+        where: { userId },
+        include: {
+            tenant: {
+                select: { name: true, subdomain: true },
+            },
+        },
+        orderBy: { createdAt: 'asc' },
     })
 }
 
@@ -23,8 +30,8 @@ export default async function AccountPage() {
     }
 
     const fullName = user.name || user.email || 'User'
-    const tenantCount = await getUserTenantCount(user.id)
-    const hasTenants = tenantCount > 0
+    const affiliations = await getUserAffiliations(user.id)
+    const hasTenants = affiliations.length > 0
 
     const quickLinks = [
         { href: '/account/tickets', label: 'My Tickets', icon: Ticket, description: 'View your purchased tickets' },
@@ -59,9 +66,7 @@ export default async function AccountPage() {
                             variant={
                                 user.role === 'ADMIN'
                                     ? 'destructive'
-                                    : user.role === 'ORGANIZER'
-                                        ? 'default'
-                                        : 'secondary'
+                                    : 'secondary'
                             }
                         >
                             <Shield className="h-3 w-3 mr-1" />
@@ -98,7 +103,12 @@ export default async function AccountPage() {
                 </div>
             </div>
 
-            {/* Become an Organizer CTA (only if no tenants) */}
+            {/* Affiliations */}
+            {hasTenants && (
+                <AffiliationsSection affiliations={affiliations} />
+            )}
+
+            {/* Become an Organizer CTA (only if no memberships) */}
             {!hasTenants && (
                 <Card className="border-dashed">
                     <CardHeader>

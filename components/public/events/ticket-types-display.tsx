@@ -85,6 +85,16 @@ export function TicketTypesDisplay({ eventId, ticketTypes }: TicketTypesDisplayP
           <Card key={ticketType.id} className={isSoldOut ? 'opacity-60' : ''}>
             <CardContent className="py-4">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div className="flex gap-4">
+                {ticketType.imageUrl && (
+                  <div className="h-16 w-16 shrink-0 overflow-hidden rounded-md">
+                    <img
+                      src={ticketType.imageUrl}
+                      alt={ticketType.name}
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                )}
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <h3 className="font-semibold">{ticketType.name}</h3>
@@ -103,6 +113,7 @@ export function TicketTypesDisplay({ eventId, ticketTypes }: TicketTypesDisplayP
                     </p>
                   )}
                 </div>
+              </div>
                 <div className="flex items-center gap-4">
                   <div className="text-right">
                     <div className="text-lg font-bold">

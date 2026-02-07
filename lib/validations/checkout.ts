@@ -63,6 +63,24 @@ export const completeCheckoutSchema = z.object({
 
 export type CompleteCheckoutData = z.infer<typeof completeCheckoutSchema>;
 
+// Payment session attendee (simpler than the full attendeeSchema - no ticketIndex needed)
+export const paymentAttendeeSchema = z.object({
+  firstName: z.string().min(1, 'First name is required').max(100),
+  lastName: z.string().min(1, 'Last name is required').max(100),
+  email: z.string().email('Valid email is required'),
+  phone: z.string().optional().nullable(),
+});
+
+// Create payment session validation
+export const createPaymentSessionSchema = z.object({
+  orderId: z.string().cuid('Invalid order ID'),
+  contactEmail: z.string().email('Valid email is required'),
+  contactPhone: z.string().optional().nullable(),
+  attendees: z.array(paymentAttendeeSchema),
+});
+
+export type CreatePaymentSessionData = z.infer<typeof createPaymentSessionSchema>;
+
 // Order cancellation validation
 export const cancelOrderSchema = z.object({
   orderId: z.string().cuid('Invalid order ID'),

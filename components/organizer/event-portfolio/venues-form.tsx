@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { FileUpload } from '@/components/ui/file-upload';
 import { Plus, Trash2 } from 'lucide-react';
 
 export interface Venue {
@@ -47,16 +48,21 @@ export function VenuesForm({ initialData, onChange }: VenuesFormProps) {
     onChange(newVenues);
   };
 
-  const addImage = (venueIndex: number, imageUrl: string) => {
+  const handleImageUploaded = (venueIndex: number, url: string) => {
     const venue = venues[venueIndex];
     if (venue.images.length >= 2) return;
-    const newImages = [...venue.images, imageUrl];
+    const newImages = [...venue.images, url];
     updateVenue(venueIndex, 'images', newImages);
   };
 
-  const removeImage = (venueIndex: number, imageIndex: number) => {
+  const handleImageReplaced = (venueIndex: number, imageIndex: number, url: string | undefined) => {
     const venue = venues[venueIndex];
-    const newImages = venue.images.filter((_, i) => i !== imageIndex);
+    const newImages = [...venue.images];
+    if (url) {
+      newImages[imageIndex] = url;
+    } else {
+      newImages.splice(imageIndex, 1);
+    }
     updateVenue(venueIndex, 'images', newImages);
   };
 
@@ -107,38 +113,29 @@ export function VenuesForm({ initialData, onChange }: VenuesFormProps) {
 
             <div className="space-y-2">
               <Label>Venue Images (up to 2)</Label>
-              <div className="space-y-2">
+              <div className="grid grid-cols-2 gap-3">
                 {venue.images.map((image, imageIndex) => (
-                  <div key={imageIndex} className="flex items-center gap-2">
-                    <Input
-                      placeholder="Image URL (Vercel Blob placeholder)"
-                      value={image}
-                      onChange={(e) => {
-                        const newImages = [...venue.images];
-                        newImages[imageIndex] = e.target.value;
-                        updateVenue(venueIndex, 'images', newImages);
-                      }}
-                    />
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeImage(venueIndex, imageIndex)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  <FileUpload
+                    key={`${venueIndex}-image-${imageIndex}`}
+                    value={image}
+                    onChange={(url) => handleImageReplaced(venueIndex, imageIndex, url)}
+                    folder={`portfolio/venues/${venueIndex}`}
+                  />
                 ))}
                 {venue.images.length < 2 && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => addImage(venueIndex, '')}
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Image
-                  </Button>
+                  <FileUpload
+                    key={`${venueIndex}-image-new-${venue.images.length}`}
+                    value={undefined}
+                    onChange={(url) => {
+                      if (url) handleImageUploaded(venueIndex, url);
+                    }}
+                    folder={`portfolio/venues/${venueIndex}`}
+                  />
                 )}
               </div>
+              <p className="text-xs text-muted-foreground">
+                {venue.images.length}/2 images uploaded
+              </p>
             </div>
           </CardContent>
         </Card>

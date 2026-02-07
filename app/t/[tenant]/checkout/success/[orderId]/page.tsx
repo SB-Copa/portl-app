@@ -1,7 +1,9 @@
 import { notFound, redirect } from 'next/navigation';
-import { getOrderForCheckoutAction } from '@/app/actions/checkout';
+import { getOrderForCheckoutAction, verifyAndConfirmPaymentAction } from '@/app/actions/checkout';
 import { CheckoutSuccess } from '@/components/checkout';
 import { getCurrentUser } from '@/lib/auth';
+import { mainUrl, tenantUrl } from '@/lib/url';
+import { PaymentProcessing } from '@/components/checkout/payment-processing';
 
 interface CheckoutSuccessPageProps {
   params: Promise<{
@@ -15,7 +17,7 @@ export default async function CheckoutSuccessPage({ params }: CheckoutSuccessPag
 
   const user = await getCurrentUser();
   if (!user) {
-    redirect(`/auth/signin?callbackUrl=/t/${tenant}/checkout/success/${orderId}`);
+    redirect(mainUrl(`/auth/signin?callbackUrl=${encodeURIComponent(tenantUrl(tenant, `/checkout/success/${orderId}`))}`));
   }
 
   const result = await getOrderForCheckoutAction(orderId);
@@ -26,16 +28,50 @@ export default async function CheckoutSuccessPage({ params }: CheckoutSuccessPag
 
   const order = result.data;
 
-  // Verify order is confirmed
-  if (order.status !== 'CONFIRMED') {
-    redirect(`/t/${tenant}/checkout`);
+  // Order already confirmed - show success
+  if (order.status === 'CONFIRMED') {
+    return (
+      <div className="min-h-screen bg-background">
+        <main className="container mx-auto px-4 py-12">
+          <CheckoutSuccess order={order} tenantSubdomain={tenant} />
+        </main>
+      </div>
+    );
   }
 
-  return (
-    <div className="min-h-screen bg-background">
-      <main className="container mx-auto px-4 py-12">
-        <CheckoutSuccess order={order} tenantSubdomain={tenant} />
-      </main>
-    </div>
-  );
+  // Order is pending - try synchronous verification
+  if (order.status === 'PENDING' && order.paymentSessionId) {
+    const verifyResult = await verifyAndConfirmPaymentAction(orderId);
+
+    if (!('error' in verifyResult) && verifyResult.data.status === 'confirmed') {
+      // Re-fetch the order to get updated data with tickets
+      const updatedResult = await getOrderForCheckoutAction(orderId);
+      if (!('error' in updatedResult)) {
+        return (
+          <div className="min-h-screen bg-background">
+            <main className="container mx-auto px-4 py-12">
+              <CheckoutSuccess order={updatedResult.data} tenantSubdomain={tenant} />
+            </main>
+          </div>
+        );
+      }
+    }
+
+    // Payment still processing - show processing state with auto-refresh
+    return (
+      <div className="min-h-screen bg-background">
+        <main className="container mx-auto px-4 py-12">
+          <PaymentProcessing orderId={orderId} tenantSubdomain={tenant} />
+        </main>
+      </div>
+    );
+  }
+
+  // Order is cancelled or other status
+  if (order.status === 'CANCELLED') {
+    redirect('/checkout');
+  }
+
+  // Fallback - redirect to checkout
+  redirect('/checkout');
 }

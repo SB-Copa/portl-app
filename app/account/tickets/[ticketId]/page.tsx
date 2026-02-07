@@ -6,7 +6,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
-import { ArrowLeft, Calendar, MapPin, Clock, Ticket, QrCode, User } from 'lucide-react'
+import { ArrowLeft, Calendar, MapPin, Clock, Ticket, User } from 'lucide-react'
+import { TicketQRCode } from '@/components/ui/ticket-qr-code'
+import { tenantUrl } from '@/lib/url'
 import { getTicketByIdAction } from '@/app/actions/orders'
 
 interface TicketDetailPageProps {
@@ -87,14 +89,9 @@ export default async function TicketDetailPage({ params }: TicketDetailPageProps
 
                 {/* Ticket Details */}
                 <CardContent className="p-6 space-y-6">
-                    {/* QR Code Placeholder */}
+                    {/* QR Code */}
                     <div className="flex justify-center">
-                        <div className="w-48 h-48 bg-muted rounded-lg flex flex-col items-center justify-center">
-                            <QrCode className="h-16 w-16 text-muted-foreground/50 mb-2" />
-                            <p className="text-xs text-muted-foreground text-center">
-                                QR code will be<br />available here
-                            </p>
-                        </div>
+                        <TicketQRCode value={ticket.ticketCode} />
                     </div>
 
                     {/* Ticket Code */}
@@ -177,9 +174,9 @@ export default async function TicketDetailPage({ params }: TicketDetailPageProps
                             </Link>
                         </Button>
                         <Button variant="outline" asChild>
-                            <Link href={`/t/${ticket.event.tenant.subdomain}/events/${ticket.eventId}`}>
+                            <a href={tenantUrl(ticket.event.tenant.subdomain, `/events/${ticket.eventId}`)}>
                                 View Event Page
-                            </Link>
+                            </a>
                         </Button>
                     </div>
                 </CardContent>

@@ -62,7 +62,7 @@ export function TableForm({ eventId, defaultValues, onSubmit, onCancel }: TableF
           className={errors.label ? 'border-red-500' : ''}
         />
         {errors.label && (
-          <p className="text-sm text-red-600">{errors.label.message}</p>
+          <p className="text-sm text-destructive">{errors.label.message}</p>
         )}
       </div>
 
@@ -77,7 +77,7 @@ export function TableForm({ eventId, defaultValues, onSubmit, onCancel }: TableF
             className={errors.capacity ? 'border-red-500' : ''}
           />
           {errors.capacity && (
-            <p className="text-sm text-red-600">{errors.capacity.message}</p>
+            <p className="text-sm text-destructive">{errors.capacity.message}</p>
           )}
         </div>
 
@@ -97,7 +97,7 @@ export function TableForm({ eventId, defaultValues, onSubmit, onCancel }: TableF
             </SelectContent>
           </Select>
           {errors.mode && (
-            <p className="text-sm text-red-600">{errors.mode.message}</p>
+            <p className="text-sm text-destructive">{errors.mode.message}</p>
           )}
         </div>
       </div>
@@ -113,7 +113,7 @@ export function TableForm({ eventId, defaultValues, onSubmit, onCancel }: TableF
           className={errors.minSpend ? 'border-red-500' : ''}
         />
         {errors.minSpend && (
-          <p className="text-sm text-red-600">{errors.minSpend.message}</p>
+          <p className="text-sm text-destructive">{errors.minSpend.message}</p>
         )}
       </div>
 
@@ -127,7 +127,7 @@ export function TableForm({ eventId, defaultValues, onSubmit, onCancel }: TableF
           className={errors.notes ? 'border-red-500' : ''}
         />
         {errors.notes && (
-          <p className="text-sm text-red-600">{errors.notes.message}</p>
+          <p className="text-sm text-destructive">{errors.notes.message}</p>
         )}
       </div>
 

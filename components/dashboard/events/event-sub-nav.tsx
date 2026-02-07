@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { LayoutDashboard, TableIcon, Ticket, Tag } from 'lucide-react';
+import { LayoutDashboard, TableIcon, Ticket, Tag, ImageIcon, ClipboardList, UserCheck } from 'lucide-react';
 
 interface EventSubNavProps {
   eventId: string;
@@ -12,6 +12,9 @@ interface EventSubNavProps {
     tables: number;
     ticketTypes: number;
     promotions: number;
+    images: number;
+    orders?: number;
+    attendees?: number;
   };
 }
 
@@ -26,6 +29,12 @@ export function EventSubNav({ eventId, tenantSubdomain, tableCounts }: EventSubN
       href: basePath,
       icon: LayoutDashboard,
       isActive: pathname === basePath,
+    },
+    {
+      label: `Gallery${tableCounts ? ` (${tableCounts.images})` : ''}`,
+      href: `${basePath}/gallery`,
+      icon: ImageIcon,
+      isActive: pathname === `${basePath}/gallery`,
     },
     {
       label: `Tables${tableCounts ? ` (${tableCounts.tables})` : ''}`,
@@ -44,6 +53,18 @@ export function EventSubNav({ eventId, tenantSubdomain, tableCounts }: EventSubN
       href: `${basePath}/promotions`,
       icon: Tag,
       isActive: pathname === `${basePath}/promotions`,
+    },
+    {
+      label: `Orders${tableCounts?.orders !== undefined ? ` (${tableCounts.orders})` : ''}`,
+      href: `${basePath}/orders`,
+      icon: ClipboardList,
+      isActive: pathname === `${basePath}/orders`,
+    },
+    {
+      label: `Attendees${tableCounts?.attendees !== undefined ? ` (${tableCounts.attendees})` : ''}`,
+      href: `${basePath}/attendees`,
+      icon: UserCheck,
+      isActive: pathname === `${basePath}/attendees`,
     },
   ];
 

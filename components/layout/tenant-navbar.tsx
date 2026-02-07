@@ -1,11 +1,12 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { HeaderActions } from './header-actions'
+import { mainUrl } from '@/lib/url'
 
 type TenantNavbarProps = {
     tenantSubdomain: string
     tenantName?: string
-    tenantLogoUrl?: string // For future tenant logo support
+    tenantLogoUrl?: string
 }
 
 export async function TenantNavbar({
@@ -18,27 +19,34 @@ export async function TenantNavbar({
             {/* Logo */}
             <div className="flex items-center">
                 <Link href="/">
-                    <Image
-                        src="/images/logo/portl-logo-white.svg"
-                        alt="Portl Logo"
-                        width={80}
-                        height={32}
-                        className="h-8 w-auto"
-                    />
+                    {tenantLogoUrl ? (
+                        <img
+                            src={tenantLogoUrl}
+                            alt={tenantName || tenantSubdomain}
+                            className="h-8 w-auto max-w-[120px] object-contain"
+                        />
+                    ) : (
+                        <Image
+                            src="/images/logo/portl-logo-white.svg"
+                            alt="Portl Logo"
+                            width={80}
+                            height={32}
+                            className="h-8 w-auto"
+                        />
+                    )}
                 </Link>
-                {/* Future: tenant logo or name badge */}
             </div>
 
             {/* Tenant Navigation Links */}
             <div className="hidden md:flex items-center gap-6 text-sm">
                 <Link
-                    href={`/t/${tenantSubdomain}`}
+                    href="/"
                     className="text-muted-foreground hover:text-foreground transition-colors"
                 >
                     Home
                 </Link>
                 <Link
-                    href={`/t/${tenantSubdomain}/events`}
+                    href="/events"
                     className="text-muted-foreground hover:text-foreground transition-colors"
                 >
                     Events
@@ -46,7 +54,7 @@ export async function TenantNavbar({
             </div>
 
             {/* Action Buttons */}
-            <HeaderActions />
+            <HeaderActions mainDomainPrefix={mainUrl('')} />
         </nav>
     )
 }

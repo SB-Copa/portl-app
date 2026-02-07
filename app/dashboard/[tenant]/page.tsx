@@ -27,7 +27,17 @@ async function getOrganizerApplication(userId: string, subdomain: string) {
     },
   })
 
-  if (!tenant || tenant.ownerId !== userId) {
+  if (!tenant) {
+    return { application: null, tenant: null }
+  }
+
+  const membership = await prisma.tenantMember.findUnique({
+    where: {
+      userId_tenantId: { userId, tenantId: tenant.id },
+    },
+  })
+
+  if (!membership) {
     return { application: null, tenant: null }
   }
 
@@ -40,6 +50,28 @@ async function getRecentEvents(tenantId: string) {
     orderBy: { updatedAt: 'desc' },
     take: 5,
   })
+}
+
+async function getTenantStats(tenantId: string) {
+  const [orderStats, ticketCount] = await Promise.all([
+    prisma.order.aggregate({
+      where: { tenantId, status: 'CONFIRMED' },
+      _sum: { total: true },
+      _count: true,
+    }),
+    prisma.ticket.count({
+      where: {
+        order: { tenantId, status: 'CONFIRMED' },
+        status: 'ACTIVE',
+      },
+    }),
+  ])
+
+  return {
+    totalAttendees: ticketCount,
+    totalRevenue: orderStats._sum.total || 0,
+    totalOrders: orderStats._count,
+  }
 }
 
 function getStepStatus(currentStep: number, stepNumber: number, isSubmitted: boolean): Step['status'] {
@@ -64,7 +96,7 @@ export default async function TenantDashboardPage({
   const { application, tenant } = await getOrganizerApplication(user.id, subdomain)
 
   if (!tenant) {
-    redirect('/dashboard')
+    redirect('/account')
   }
 
   const isSubmitted = application?.status === 'SUBMITTED'
@@ -72,7 +104,9 @@ export default async function TenantDashboardPage({
   const isRejected = application?.status === 'REJECTED'
   const isNotStarted = !application || application.status === 'NOT_STARTED'
 
-  const recentEvents = isApproved ? await getRecentEvents(tenant.id) : []
+  const [recentEvents, stats] = isApproved
+    ? await Promise.all([getRecentEvents(tenant.id), getTenantStats(tenant.id)])
+    : [[], { totalAttendees: 0, totalRevenue: 0, totalOrders: 0 }]
 
   const steps: Step[] = [
     {
@@ -133,8 +167,8 @@ export default async function TenantDashboardPage({
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">0</div>
-            <p className="text-xs text-muted-foreground">+0% from last month</p>
+            <div className="text-2xl font-bold">{stats.totalAttendees.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">{stats.totalOrders} confirmed order{stats.totalOrders !== 1 ? 's' : ''}</p>
           </CardContent>
         </Card>
         <Card>
@@ -143,8 +177,10 @@ export default async function TenantDashboardPage({
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">$0.00</div>
-            <p className="text-xs text-muted-foreground">+0% from last month</p>
+            <div className="text-2xl font-bold">
+              {new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(stats.totalRevenue / 100)}
+            </div>
+            <p className="text-xs text-muted-foreground">Lifetime revenue</p>
           </CardContent>
         </Card>
         <Card>
@@ -296,22 +332,6 @@ export default async function TenantDashboardPage({
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Resource Center</CardTitle>
-            </CardHeader>
-            <CardContent className="grid gap-2">
-              <Button variant="outline" className="w-full justify-start text-left">
-                📚 Organizer Guide
-              </Button>
-              <Button variant="outline" className="w-full justify-start text-left">
-                💡 Event Tips
-              </Button>
-              <Button variant="outline" className="w-full justify-start text-left">
-                💬 Contact Support
-              </Button>
-            </CardContent>
-          </Card>
         </div>
       </div>
     </div>

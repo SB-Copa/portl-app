@@ -28,6 +28,11 @@ export async function getPublicEventsForTenant(subdomain: string) {
             basePrice: true,
           },
         },
+        images: {
+          take: 1,
+          orderBy: { position: 'asc' },
+          select: { url: true },
+        },
       },
     });
 
@@ -55,6 +60,9 @@ export async function getPublicEventById(subdomain: string, eventId: string) {
         status: 'PUBLISHED',
       },
       include: {
+        images: {
+          orderBy: { position: 'asc' },
+        },
         ticketTypes: {
           include: {
             priceTiers: {

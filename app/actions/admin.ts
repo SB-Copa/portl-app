@@ -1,23 +1,15 @@
 'use server';
 
-import { getCurrentUser } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
+import { requireAdmin } from '@/lib/admin';
 
 /**
  * Get all organizer applications with tenant and owner details
  */
 export async function getAllApplicationsAction() {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return { error: 'Unauthorized' };
-    }
-
-    // TODO: Add admin role check when roles are implemented
-    // if (user.role !== 'ADMIN') {
-    //   return { error: 'Unauthorized: Admin access required' };
-    // }
+    const user = await requireAdmin();
 
     const applications = await prisma.organizerApplication.findMany({
       include: {
@@ -51,10 +43,7 @@ export async function getAllApplicationsAction() {
  */
 export async function getApplicationByIdAction(applicationId: string) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return { error: 'Unauthorized' };
-    }
+    const user = await requireAdmin();
 
     let application = await prisma.organizerApplication.findUnique({
       where: { id: applicationId },
@@ -148,10 +137,7 @@ export async function updateApplicationStatusAction(
   reviewNotes?: string
 ) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return { error: 'Unauthorized' };
-    }
+    const user = await requireAdmin();
 
     const updateData: any = {
       status,
@@ -172,11 +158,25 @@ export async function updateApplicationStatusAction(
       data: updateData,
     });
 
-    // If approved, activate the tenant
+    // If approved, activate the tenant and create OWNER membership
     if (status === 'APPROVED') {
-      await prisma.tenant.update({
+      const tenant = await prisma.tenant.update({
         where: { id: application.tenantId },
         data: { status: 'ACTIVE' },
+      });
+      await prisma.tenantMember.upsert({
+        where: {
+          userId_tenantId: {
+            userId: tenant.ownerId,
+            tenantId: tenant.id,
+          },
+        },
+        update: { role: 'OWNER' },
+        create: {
+          userId: tenant.ownerId,
+          tenantId: tenant.id,
+          role: 'OWNER',
+        },
       });
     }
 
@@ -222,10 +222,7 @@ export async function rejectApplicationAction(
  */
 export async function deleteApplicationAction(applicationId: string) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return { error: 'Unauthorized' };
-    }
+    const user = await requireAdmin();
 
     const application = await prisma.organizerApplication.findUnique({
       where: { id: applicationId },
@@ -256,10 +253,7 @@ export async function addApplicationNoteAction(
   note: string
 ) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return { error: 'Unauthorized' };
-    }
+    const user = await requireAdmin();
 
     if (!note || note.trim().length === 0) {
       return { error: 'Note cannot be empty' };
@@ -300,29 +294,18 @@ export async function updateApplicationNoteAction(
   note: string
 ) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return { error: 'Unauthorized' };
-    }
+    const user = await requireAdmin();
 
     if (!note || note.trim().length === 0) {
       return { error: 'Note cannot be empty' };
     }
 
-    // Verify note belongs to user or user is admin
     const existingNote = await prisma.applicationNote.findUnique({
       where: { id: noteId },
     });
 
     if (!existingNote) {
       return { error: 'Note not found' };
-    }
-
-    if (existingNote.userId !== user.id) {
-      // TODO: Check if user is admin when roles are implemented
-      // if (user.role !== 'ADMIN') {
-      //   return { error: 'Unauthorized' };
-      // }
     }
 
     const updatedNote = await prisma.applicationNote.update({
@@ -361,25 +344,14 @@ export async function updateApplicationNoteAction(
  */
 export async function deleteApplicationNoteAction(noteId: string) {
   try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return { error: 'Unauthorized' };
-    }
+    const user = await requireAdmin();
 
-    // Verify note belongs to user or user is admin
     const existingNote = await prisma.applicationNote.findUnique({
       where: { id: noteId },
     });
 
     if (!existingNote) {
       return { error: 'Note not found' };
-    }
-
-    if (existingNote.userId !== user.id) {
-      // TODO: Check if user is admin when roles are implemented
-      // if (user.role !== 'ADMIN') {
-      //   return { error: 'Unauthorized' };
-      // }
     }
 
     const applicationId = existingNote.applicationId;
@@ -394,5 +366,88 @@ export async function deleteApplicationNoteAction(noteId: string) {
   } catch (error) {
     console.error('Error deleting note:', error);
     return { error: 'Failed to delete note' };
+  }
+}
+
+/**
+ * Get platform-wide statistics for the admin dashboard
+ */
+export async function getPlatformStatsAction() {
+  try {
+    const user = await requireAdmin();
+
+    const [
+      usersTotal,
+      usersByRole,
+      tenantsTotal,
+      tenantsByStatus,
+      applicationsTotal,
+      applicationsByStatus,
+      eventsTotal,
+      eventsByStatus,
+      ordersTotal,
+      recentUsers,
+      recentTenants,
+      recentApplications,
+    ] = await Promise.all([
+      prisma.user.count(),
+      prisma.user.groupBy({ by: ['role'], _count: true }),
+      prisma.tenant.count(),
+      prisma.tenant.groupBy({ by: ['status'], _count: true }),
+      prisma.organizerApplication.count(),
+      prisma.organizerApplication.groupBy({ by: ['status'], _count: true }),
+      prisma.event.count(),
+      prisma.event.groupBy({ by: ['status'], _count: true }),
+      prisma.order.count(),
+      prisma.user.findMany({
+        take: 5,
+        orderBy: { createdAt: 'desc' },
+        select: { id: true, firstName: true, lastName: true, email: true, role: true, createdAt: true },
+      }),
+      prisma.tenant.findMany({
+        take: 5,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          owner: { select: { id: true, firstName: true, lastName: true, email: true } },
+        },
+      }),
+      prisma.organizerApplication.findMany({
+        take: 5,
+        orderBy: { updatedAt: 'desc' },
+        include: {
+          tenant: { select: { id: true, name: true, subdomain: true } },
+        },
+      }),
+    ]);
+
+    return {
+      data: {
+        users: {
+          total: usersTotal,
+          byRole: Object.fromEntries(usersByRole.map((r) => [r.role, r._count])),
+        },
+        tenants: {
+          total: tenantsTotal,
+          byStatus: Object.fromEntries(tenantsByStatus.map((t) => [t.status, t._count])),
+        },
+        applications: {
+          total: applicationsTotal,
+          byStatus: Object.fromEntries(applicationsByStatus.map((a) => [a.status, a._count])),
+        },
+        events: {
+          total: eventsTotal,
+          byStatus: Object.fromEntries(eventsByStatus.map((e) => [e.status, e._count])),
+        },
+        orders: {
+          total: ordersTotal,
+        },
+        recentUsers,
+        recentTenants,
+        recentApplications,
+      },
+    };
+  } catch (error) {
+    console.error('Error fetching platform stats:', error);
+    return { error: 'Failed to fetch platform stats' };
   }
 }

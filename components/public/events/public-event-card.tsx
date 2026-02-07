@@ -5,6 +5,7 @@ import type { Event, TicketType } from '@/prisma/generated/prisma/client';
 
 type EventWithTicketTypes = Event & {
   ticketTypes: Pick<TicketType, 'id' | 'basePrice'>[];
+  images: { url: string }[];
 };
 
 interface PublicEventCardProps {
@@ -32,10 +33,20 @@ export function PublicEventCard({ event, tenantSubdomain }: PublicEventCardProps
   };
 
   const startingPrice = getStartingPrice();
+  const thumbnailUrl = event.thumbnailUrl || event.images?.[0]?.url;
 
   return (
-    <Link href={`/t/${tenantSubdomain}/events/${event.id}`}>
-      <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer group">
+    <Link href={`/events/${event.id}`}>
+      <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer group overflow-hidden">
+        {thumbnailUrl && (
+          <div className="aspect-[16/9] overflow-hidden">
+            <img
+              src={thumbnailUrl}
+              alt={event.name}
+              className="h-full w-full object-cover transition-transform group-hover:scale-105"
+            />
+          </div>
+        )}
         <CardHeader>
           <CardTitle className="text-xl group-hover:text-primary transition-colors line-clamp-2">
             {event.name}

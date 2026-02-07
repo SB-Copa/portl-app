@@ -42,9 +42,9 @@ const kindLabels = {
 };
 
 const kindColors = {
-  GENERAL: 'bg-blue-100 text-blue-800',
-  TABLE: 'bg-purple-100 text-purple-800',
-  SEAT: 'bg-green-100 text-green-800',
+  GENERAL: 'bg-blue-500/20 text-blue-400',
+  TABLE: 'bg-purple-500/20 text-purple-400',
+  SEAT: 'bg-green-500/20 text-green-400',
 };
 
 export function TicketTypesSection({ event }: TicketTypesSectionProps) {
@@ -81,7 +81,7 @@ export function TicketTypesSection({ event }: TicketTypesSectionProps) {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-semibold">Ticket Types</h2>
-          <p className="text-sm text-gray-600 mt-1">
+          <p className="text-sm text-muted-foreground mt-1">
             Manage ticket types and pricing for this event
           </p>
         </div>
@@ -112,7 +112,7 @@ export function TicketTypesSection({ event }: TicketTypesSectionProps) {
       {event.ticketTypes.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
-            <p className="text-gray-600 mb-4 text-center">
+            <p className="text-muted-foreground mb-4 text-center">
               No ticket types created yet. Create your first ticket type to get started.
             </p>
             <Button onClick={() => setCreateDialogOpen(true)}>
@@ -163,7 +163,7 @@ export function TicketTypesSection({ event }: TicketTypesSectionProps) {
                       {ticketType.table ? (
                         <span className="text-sm">{ticketType.table.label}</span>
                       ) : (
-                        <span className="text-gray-400">—</span>
+                        <span className="text-muted-foreground">—</span>
                       )}
                     </TableCell>
                     <TableCell>

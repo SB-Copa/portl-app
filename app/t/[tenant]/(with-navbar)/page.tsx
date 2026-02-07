@@ -1,67 +1,234 @@
-import Link from 'next/link'
-import type { Metadata } from 'next'
-import { notFound } from 'next/navigation'
-import { getCurrentTenant } from '@/lib/tenant'
-import { getCurrentUser } from '@/lib/auth'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import type { Metadata } from 'next';
+import Link from 'next/link';
+import { notFound } from 'next/navigation';
+import { getPublicTenantPageData } from '@/app/actions/tenant-page';
+import { PublicEventCard } from '@/components/public/events/public-event-card';
+import { Button } from '@/components/ui/button';
+import { Instagram, Facebook, Twitter, Globe, Music2 } from 'lucide-react';
 
-export default async function SubdomainPage({
-    params
-}: {
-    params: Promise<{ tenant: string }>
-}) {
-    const { tenant: subdomain } = await params
-    const user = await getCurrentUser()
-    const tenant = await getCurrentTenant(subdomain)
+type PageProps = {
+  params: Promise<{ tenant: string }>;
+};
 
-    if (!tenant) {
-        notFound()
-    }
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { tenant: subdomain } = await params;
+  const result = await getPublicTenantPageData(subdomain);
 
-    return (
-        <div className="flex min-h-screen flex-col bg-gradient-to-b from-blue-50 to-white dark:from-background dark:to-muted/30 p-4">
-            <div className="flex-1 flex items-center justify-center">
-                <div className="text-center max-w-4xl mx-auto">
-                    <div className="text-9xl mb-6">{subdomain}</div>
-                    <h1 className="text-4xl font-bold tracking-tight text-gray-900 dark:text-foreground">
-                        Welcome to {tenant.name}
-                    </h1>
-                    <p className="mt-3 text-lg text-gray-600 dark:text-muted-foreground">
-                        {tenant.subdomain} organizer portal
-                    </p>
+  if (result.error || !result.data) {
+    return { title: 'Not Found' };
+  }
 
-                    {user && (
-                        <div className="mt-12">
-                            <Card className="text-left">
-                                <CardHeader>
-                                    <CardTitle>Become an Event Organizer</CardTitle>
-                                    <CardDescription>
-                                        Create and manage events on {subdomain}
-                                    </CardDescription>
-                                </CardHeader>
-                                <CardContent>
-                                    <p className="text-sm text-gray-600 dark:text-muted-foreground mb-4">
-                                        Apply to become an organizer and start hosting amazing events.
-                                        The application takes just a few minutes to complete.
-                                    </p>
-                                    <Link href={`/dashboard/${subdomain}`}>
-                                        <Button>Get Started</Button>
-                                    </Link>
-                                </CardContent>
-                            </Card>
-                        </div>
-                    )}
+  const { name, tagline, bannerUrl } = result.data;
 
-                    {!user && (
-                        <div className="mt-12">
-                            <Link href="/auth/signin">
-                                <Button size="lg">Sign In to Get Started</Button>
-                            </Link>
-                        </div>
-                    )}
-                </div>
-            </div>
+  return {
+    title: name,
+    description: tagline || `${name} on Portl`,
+    openGraph: {
+      title: name,
+      description: tagline || `${name} on Portl`,
+      ...(bannerUrl ? { images: [{ url: bannerUrl }] } : {}),
+    },
+  };
+}
+
+export default async function TenantLandingPage({ params }: PageProps) {
+  const { tenant: subdomain } = await params;
+  const result = await getPublicTenantPageData(subdomain);
+
+  if (result.error || !result.data) {
+    notFound();
+  }
+
+  const tenant = result.data;
+  const hasSocials = tenant.socialInstagram || tenant.socialFacebook || tenant.socialTwitter || tenant.socialTiktok || tenant.socialWebsite;
+
+  return (
+    <div className="min-h-screen">
+      {/* Hero Section */}
+      <section className="relative flex items-center justify-center min-h-[60vh] overflow-hidden">
+        {/* Background */}
+        {tenant.bannerUrl ? (
+          <div
+            className="absolute inset-0 bg-cover bg-center"
+            style={{ backgroundImage: `url(${tenant.bannerUrl})` }}
+          >
+            <div className="absolute inset-0 bg-black/60" />
+          </div>
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900" />
+        )}
+
+        {/* Content */}
+        <div className="relative z-10 text-center px-6 py-20 max-w-3xl mx-auto">
+          {tenant.logoUrl && (
+            <img
+              src={tenant.logoUrl}
+              alt={tenant.name}
+              className="h-20 w-auto mx-auto mb-6 object-contain"
+            />
+          )}
+          <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-white">
+            {tenant.name}
+          </h1>
+          {tenant.tagline && (
+            <p className="mt-4 text-lg md:text-xl text-zinc-300">
+              {tenant.tagline}
+            </p>
+          )}
+          <div className="mt-8">
+            <Link href="/events">
+              <Button size="lg" className="text-base px-8">
+                View Events
+              </Button>
+            </Link>
+          </div>
         </div>
-    )
+      </section>
+
+      {/* Events Section */}
+      {tenant.events.length > 0 && (
+        <section className="py-16 px-6 md:px-12">
+          <div className="max-w-6xl mx-auto">
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-2xl md:text-3xl font-bold tracking-tight">
+                Upcoming Events
+              </h2>
+              <Link
+                href="/events"
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                View all
+              </Link>
+            </div>
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {tenant.events.map((event) => (
+                <PublicEventCard
+                  key={event.id}
+                  event={event}
+                  tenantSubdomain={subdomain}
+                />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Gallery Section */}
+      {tenant.images.length > 0 && (
+        <section className="py-16 px-6 md:px-12 bg-muted/30">
+          <div className="max-w-6xl mx-auto">
+            <h2 className="text-2xl md:text-3xl font-bold tracking-tight mb-8">
+              Gallery
+            </h2>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {tenant.images.map((image, index) => (
+                <div
+                  key={image.id}
+                  className="group overflow-hidden rounded-lg"
+                >
+                  <div className="aspect-[16/9] overflow-hidden">
+                    <img
+                      src={image.url}
+                      alt={`${tenant.name} gallery ${index + 1}`}
+                      className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* About Section */}
+      {(tenant.description || tenant.contactEmail) && (
+        <section className="py-16 px-6 md:px-12">
+          <div className="max-w-3xl mx-auto">
+            <h2 className="text-2xl md:text-3xl font-bold tracking-tight mb-6">
+              About
+            </h2>
+            {tenant.description && (
+              <p className="text-muted-foreground leading-relaxed whitespace-pre-line">
+                {tenant.description}
+              </p>
+            )}
+            {tenant.contactEmail && (
+              <p className="mt-6 text-sm text-muted-foreground">
+                Contact:{' '}
+                <a
+                  href={`mailto:${tenant.contactEmail}`}
+                  className="text-foreground hover:underline"
+                >
+                  {tenant.contactEmail}
+                </a>
+              </p>
+            )}
+          </div>
+        </section>
+      )}
+
+      {/* Social Links Section */}
+      {hasSocials && (
+        <section className="py-12 px-6 md:px-12 border-t">
+          <div className="max-w-3xl mx-auto flex items-center justify-center gap-6">
+            {tenant.socialInstagram && (
+              <a
+                href={tenant.socialInstagram}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-foreground transition-colors"
+                aria-label="Instagram"
+              >
+                <Instagram className="h-6 w-6" />
+              </a>
+            )}
+            {tenant.socialFacebook && (
+              <a
+                href={tenant.socialFacebook}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-foreground transition-colors"
+                aria-label="Facebook"
+              >
+                <Facebook className="h-6 w-6" />
+              </a>
+            )}
+            {tenant.socialTwitter && (
+              <a
+                href={tenant.socialTwitter}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-foreground transition-colors"
+                aria-label="Twitter"
+              >
+                <Twitter className="h-6 w-6" />
+              </a>
+            )}
+            {tenant.socialTiktok && (
+              <a
+                href={tenant.socialTiktok}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-foreground transition-colors"
+                aria-label="TikTok"
+              >
+                <Music2 className="h-6 w-6" />
+              </a>
+            )}
+            {tenant.socialWebsite && (
+              <a
+                href={tenant.socialWebsite}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-foreground transition-colors"
+                aria-label="Website"
+              >
+                <Globe className="h-6 w-6" />
+              </a>
+            )}
+          </div>
+        </section>
+      )}
+    </div>
+  );
 }

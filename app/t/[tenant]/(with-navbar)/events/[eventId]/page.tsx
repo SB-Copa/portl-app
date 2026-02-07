@@ -50,7 +50,7 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
     const event = result.data
 
     return (
-        <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
+        <div className="min-h-screen">
             <div className="container mx-auto px-4 py-8">
                 <PublicEventDetail
                     event={event}

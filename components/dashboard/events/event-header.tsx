@@ -15,6 +15,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { Event } from '@/prisma/generated/prisma/client';
+import { tenantUrl } from '@/lib/url';
 import { publishEventForTenantAction, archiveEventForTenantAction } from '@/app/actions/tenant-events';
 
 interface EventHeaderProps {
@@ -98,10 +99,10 @@ export function EventHeader({ event, tenantSubdomain }: EventHeaderProps) {
 
         {event.status === 'PUBLISHED' && (
           <Button variant="outline" asChild>
-            <Link href={`/t/${tenantSubdomain}/events/${event.id}`} target="_blank">
+            <a href={tenantUrl(tenantSubdomain, `/events/${event.id}`)} target="_blank" rel="noopener noreferrer">
               <Eye className="mr-2 h-4 w-4" />
               View Live
-            </Link>
+            </a>
           </Button>
         )}
 

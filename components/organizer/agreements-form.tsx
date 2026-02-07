@@ -65,9 +65,9 @@ export function AgreementsForm({ initialData, onSubmit }: AgreementsFormProps) {
                 <Label htmlFor="tos" className="cursor-pointer text-base font-medium">
                   Terms of Service
                 </Label>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-muted-foreground">
                   I agree to the platform's Terms of Service and understand my obligations as an organizer.
-                  <button className="text-blue-600 hover:underline ml-1">
+                  <button className="text-primary hover:underline ml-1">
                     View Terms of Service
                   </button>
                 </p>
@@ -86,9 +86,9 @@ export function AgreementsForm({ initialData, onSubmit }: AgreementsFormProps) {
                 <Label htmlFor="organizer-agreement" className="cursor-pointer text-base font-medium">
                   Organizer Agreement
                 </Label>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-muted-foreground">
                   I agree to the Organizer Agreement, including event compliance requirements and platform standards.
-                  <button className="text-blue-600 hover:underline ml-1">
+                  <button className="text-primary hover:underline ml-1">
                     View Organizer Agreement
                   </button>
                 </p>
@@ -107,9 +107,9 @@ export function AgreementsForm({ initialData, onSubmit }: AgreementsFormProps) {
                 <Label htmlFor="privacy-policy" className="cursor-pointer text-base font-medium">
                   Privacy Policy
                 </Label>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-muted-foreground">
                   I have read and agree to the Privacy Policy regarding how my data is collected, used, and protected.
-                  <button className="text-blue-600 hover:underline ml-1">
+                  <button className="text-primary hover:underline ml-1">
                     View Privacy Policy
                   </button>
                 </p>
@@ -128,9 +128,9 @@ export function AgreementsForm({ initialData, onSubmit }: AgreementsFormProps) {
                 <Label htmlFor="community-guidelines" className="cursor-pointer text-base font-medium">
                   Community Guidelines
                 </Label>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-muted-foreground">
                   I agree to follow the Community Guidelines and understand the standards for events and interactions on the platform.
-                  <button className="text-blue-600 hover:underline ml-1">
+                  <button className="text-primary hover:underline ml-1">
                     View Community Guidelines
                   </button>
                 </p>
@@ -138,9 +138,9 @@ export function AgreementsForm({ initialData, onSubmit }: AgreementsFormProps) {
             </div>
           </div>
 
-          <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-            <p className="text-sm text-gray-600">
-              <strong>Next Steps:</strong> After accepting all agreements, you'll be able to review your application
+          <div className="rounded-lg border bg-muted/50 p-4">
+            <p className="text-sm text-muted-foreground">
+              <strong>Next Steps:</strong> After accepting all agreements, you&apos;ll be able to review your application
               before final submission. Our team will review your application after submission.
             </p>
           </div>

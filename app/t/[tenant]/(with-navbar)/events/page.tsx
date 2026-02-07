@@ -40,7 +40,7 @@ export default async function EventsPage({ params }: EventsPageProps) {
     const events = result.data ?? []
 
     return (
-        <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
+        <div className="min-h-screen">
             <div className="container mx-auto px-4 py-8">
                 <div className="mb-8">
                     <h1 className="text-3xl md:text-4xl font-bold tracking-tight">

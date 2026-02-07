@@ -77,7 +77,7 @@ export function PriceTiersSection({ ticketType }: PriceTiersSectionProps) {
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-xl font-semibold">{ticketType.name} - Price Tiers</h3>
-          <p className="text-sm text-gray-600 mt-1">
+          <p className="text-sm text-muted-foreground mt-1">
             Manage pricing tiers for this ticket type
           </p>
         </div>
@@ -107,7 +107,7 @@ export function PriceTiersSection({ ticketType }: PriceTiersSectionProps) {
       {ticketType.priceTiers.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
-            <p className="text-gray-600 mb-4 text-center">
+            <p className="text-muted-foreground mb-4 text-center">
               No price tiers created yet. Create your first price tier to get started.
             </p>
             <Button onClick={() => setCreateDialogOpen(true)}>
@@ -169,13 +169,13 @@ export function PriceTiersSection({ ticketType }: PriceTiersSectionProps) {
                               </div>
                             </div>
                           ) : (
-                            <span className="text-gray-400">—</span>
+                            <span className="text-muted-foreground">—</span>
                           )}
                         </TableCell>
                         <TableCell>{tier.priority}</TableCell>
                         <TableCell>
                           {isActive ? (
-                            <Badge className="bg-green-100 text-green-800">Active</Badge>
+                            <Badge className="bg-green-500/20 text-green-400">Active</Badge>
                           ) : (
                             <Badge variant="outline">Inactive</Badge>
                           )}

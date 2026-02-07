@@ -91,7 +91,7 @@ export function TablesSection({ event }: TablesSectionProps) {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-semibold">Tables & Seats</h2>
-          <p className="text-sm text-gray-600 mt-1">
+          <p className="text-sm text-muted-foreground mt-1">
             Manage tables and their seat configurations
           </p>
         </div>
@@ -144,7 +144,7 @@ export function TablesSection({ event }: TablesSectionProps) {
       {event.tables.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
-            <p className="text-gray-600 mb-4 text-center">
+            <p className="text-muted-foreground mb-4 text-center">
               No tables created yet. Create your first table to get started.
             </p>
             <Button onClick={() => setCreateDialogOpen(true)}>

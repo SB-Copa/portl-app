@@ -61,7 +61,7 @@ export function PriceTierForm({ ticketTypeId, defaultValues, onSubmit, onCancel 
           className={errors.name ? 'border-red-500' : ''}
         />
         {errors.name && (
-          <p className="text-sm text-red-600">{errors.name.message}</p>
+          <p className="text-sm text-destructive">{errors.name.message}</p>
         )}
       </div>
 
@@ -76,7 +76,7 @@ export function PriceTierForm({ ticketTypeId, defaultValues, onSubmit, onCancel 
           className={errors.price ? 'border-red-500' : ''}
         />
         {errors.price && (
-          <p className="text-sm text-red-600">{errors.price.message}</p>
+          <p className="text-sm text-destructive">{errors.price.message}</p>
         )}
       </div>
 
@@ -96,7 +96,7 @@ export function PriceTierForm({ ticketTypeId, defaultValues, onSubmit, onCancel 
           </SelectContent>
         </Select>
         {errors.strategy && (
-          <p className="text-sm text-red-600">{errors.strategy.message}</p>
+          <p className="text-sm text-destructive">{errors.strategy.message}</p>
         )}
       </div>
 
@@ -112,7 +112,7 @@ export function PriceTierForm({ ticketTypeId, defaultValues, onSubmit, onCancel 
               className={errors.startsAt ? 'border-red-500' : ''}
             />
             {errors.startsAt && (
-              <p className="text-sm text-red-600">{errors.startsAt.message}</p>
+              <p className="text-sm text-destructive">{errors.startsAt.message}</p>
             )}
           </div>
 
@@ -126,7 +126,7 @@ export function PriceTierForm({ ticketTypeId, defaultValues, onSubmit, onCancel 
               className={errors.endsAt ? 'border-red-500' : ''}
             />
             {errors.endsAt && (
-              <p className="text-sm text-red-600">{errors.endsAt.message}</p>
+              <p className="text-sm text-destructive">{errors.endsAt.message}</p>
             )}
           </div>
         </div>
@@ -144,7 +144,7 @@ export function PriceTierForm({ ticketTypeId, defaultValues, onSubmit, onCancel 
             className={errors.allocationTotal ? 'border-red-500' : ''}
           />
           {errors.allocationTotal && (
-            <p className="text-sm text-red-600">{errors.allocationTotal.message}</p>
+            <p className="text-sm text-destructive">{errors.allocationTotal.message}</p>
           )}
         </div>
       )}
@@ -160,9 +160,9 @@ export function PriceTierForm({ ticketTypeId, defaultValues, onSubmit, onCancel 
           className={errors.priority ? 'border-red-500' : ''}
         />
         {errors.priority && (
-          <p className="text-sm text-red-600">{errors.priority.message}</p>
+          <p className="text-sm text-destructive">{errors.priority.message}</p>
         )}
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-muted-foreground">
           Higher priority tiers take precedence when multiple tiers are active
         </p>
       </div>

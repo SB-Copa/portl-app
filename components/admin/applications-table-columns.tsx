@@ -34,11 +34,11 @@ type Application = OrganizerApplication & Prisma.OrganizerApplicationGetPayload<
 }>;
 
 const statusColors = {
-  NOT_STARTED: 'bg-gray-100 text-gray-800',
-  IN_PROGRESS: 'bg-blue-100 text-blue-800',
-  SUBMITTED: 'bg-yellow-100 text-yellow-800',
-  APPROVED: 'bg-green-100 text-green-800',
-  REJECTED: 'bg-red-100 text-red-800',
+  NOT_STARTED: 'bg-muted text-muted-foreground',
+  IN_PROGRESS: 'bg-blue-500/20 text-blue-400',
+  SUBMITTED: 'bg-yellow-500/20 text-yellow-400',
+  APPROVED: 'bg-green-500/20 text-green-400',
+  REJECTED: 'bg-red-500/20 text-red-400',
 };
 
 const statusLabels = {
@@ -59,7 +59,7 @@ export const columns: ColumnDef<Application>[] = [
       return (
         <Link
           href={`/applications/${applicationId}`}
-          className="font-mono text-sm hover:underline text-blue-600"
+          className="font-mono text-sm hover:underline text-primary"
         >
           {subdomain}
         </Link>
@@ -74,7 +74,7 @@ export const columns: ColumnDef<Application>[] = [
       return (
         <Link
           href={`/applications/${applicationId}`}
-          className="font-medium hover:underline text-blue-600"
+          className="font-medium hover:underline text-primary"
         >
           {row.original.tenant.name}
         </Link>
@@ -92,7 +92,7 @@ export const columns: ColumnDef<Application>[] = [
       return (
         <div className="flex flex-col">
           <span className="text-sm">{name}</span>
-          <span className="text-xs text-gray-500">{owner.email}</span>
+          <span className="text-xs text-muted-foreground">{owner.email}</span>
         </div>
       );
     },
@@ -117,10 +117,10 @@ export const columns: ColumnDef<Application>[] = [
       const status = row.original.status;
       
       if (status === 'SUBMITTED' || status === 'APPROVED' || status === 'REJECTED') {
-        return <span className="text-sm text-gray-500">Completed</span>;
+        return <span className="text-sm text-muted-foreground">Completed</span>;
       }
       
-      return <span className="text-sm text-gray-500">Step {step}/3</span>;
+      return <span className="text-sm text-muted-foreground">Step {step}/3</span>;
     },
   },
   {
@@ -128,9 +128,9 @@ export const columns: ColumnDef<Application>[] = [
     header: 'Submitted',
     cell: ({ row }) => {
       const submittedAt = row.original.submittedAt;
-      if (!submittedAt) return <span className="text-gray-400">—</span>;
+      if (!submittedAt) return <span className="text-muted-foreground">—</span>;
       return (
-        <span className="text-sm text-gray-500">
+        <span className="text-sm text-muted-foreground">
           {formatDistanceToNow(new Date(submittedAt), { addSuffix: true })}
         </span>
       );

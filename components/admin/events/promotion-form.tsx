@@ -78,7 +78,7 @@ export function PromotionForm({ eventId, ticketTypes, defaultValues, onSubmit, o
           className={errors.name ? 'border-red-500' : ''}
         />
         {errors.name && (
-          <p className="text-sm text-red-600">{errors.name.message}</p>
+          <p className="text-sm text-destructive">{errors.name.message}</p>
         )}
       </div>
 
@@ -92,7 +92,7 @@ export function PromotionForm({ eventId, ticketTypes, defaultValues, onSubmit, o
           className={errors.description ? 'border-red-500' : ''}
         />
         {errors.description && (
-          <p className="text-sm text-red-600">{errors.description.message}</p>
+          <p className="text-sm text-destructive">{errors.description.message}</p>
         )}
       </div>
 
@@ -113,7 +113,7 @@ export function PromotionForm({ eventId, ticketTypes, defaultValues, onSubmit, o
             </SelectContent>
           </Select>
           {errors.discountType && (
-            <p className="text-sm text-red-600">{errors.discountType.message}</p>
+            <p className="text-sm text-destructive">{errors.discountType.message}</p>
           )}
         </div>
 
@@ -132,7 +132,7 @@ export function PromotionForm({ eventId, ticketTypes, defaultValues, onSubmit, o
             className={errors.discountValue ? 'border-red-500' : ''}
           />
           {errors.discountValue && (
-            <p className="text-sm text-red-600">{errors.discountValue.message}</p>
+            <p className="text-sm text-destructive">{errors.discountValue.message}</p>
           )}
         </div>
       </div>
@@ -154,7 +154,7 @@ export function PromotionForm({ eventId, ticketTypes, defaultValues, onSubmit, o
             </SelectContent>
           </Select>
           {errors.appliesTo && (
-            <p className="text-sm text-red-600">{errors.appliesTo.message}</p>
+            <p className="text-sm text-destructive">{errors.appliesTo.message}</p>
           )}
         </div>
 
@@ -185,7 +185,7 @@ export function PromotionForm({ eventId, ticketTypes, defaultValues, onSubmit, o
             className={errors.validFrom ? 'border-red-500' : ''}
           />
           {errors.validFrom && (
-            <p className="text-sm text-red-600">{errors.validFrom.message}</p>
+            <p className="text-sm text-destructive">{errors.validFrom.message}</p>
           )}
         </div>
 
@@ -199,7 +199,7 @@ export function PromotionForm({ eventId, ticketTypes, defaultValues, onSubmit, o
             className={errors.validUntil ? 'border-red-500' : ''}
           />
           {errors.validUntil && (
-            <p className="text-sm text-red-600">{errors.validUntil.message}</p>
+            <p className="text-sm text-destructive">{errors.validUntil.message}</p>
           )}
         </div>
       </div>
@@ -216,7 +216,7 @@ export function PromotionForm({ eventId, ticketTypes, defaultValues, onSubmit, o
             className={errors.maxRedemptions ? 'border-red-500' : ''}
           />
           {errors.maxRedemptions && (
-            <p className="text-sm text-red-600">{errors.maxRedemptions.message}</p>
+            <p className="text-sm text-destructive">{errors.maxRedemptions.message}</p>
           )}
         </div>
 
@@ -231,7 +231,7 @@ export function PromotionForm({ eventId, ticketTypes, defaultValues, onSubmit, o
             className={errors.maxPerUser ? 'border-red-500' : ''}
           />
           {errors.maxPerUser && (
-            <p className="text-sm text-red-600">{errors.maxPerUser.message}</p>
+            <p className="text-sm text-destructive">{errors.maxPerUser.message}</p>
           )}
         </div>
       </div>
@@ -239,7 +239,7 @@ export function PromotionForm({ eventId, ticketTypes, defaultValues, onSubmit, o
       {ticketTypes.length > 0 && (
         <div className="space-y-2">
           <Label>Eligible Ticket Types</Label>
-          <p className="text-xs text-gray-500 mb-2">
+          <p className="text-xs text-muted-foreground mb-2">
             Select specific ticket types. Leave empty to apply to all types.
           </p>
           <div className="border rounded-lg p-4 max-h-48 overflow-y-auto">

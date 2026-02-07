@@ -4,7 +4,7 @@ import { HeaderActions } from './header-actions'
 
 export default async function Navbar() {
     return (
-        <nav className="bg-background/95 backdrop-blur-sm fixed top-0 w-full px-6 md:px-12 py-3 flex items-center justify-between border-b border-border z-50">
+        <nav className="bg-background fixed top-0 w-full px-6 md:px-12 py-4 flex items-center justify-between z-50">
             {/* Logo */}
             <div className="flex items-center">
                 <Link href="/">

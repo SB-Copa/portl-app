@@ -5,6 +5,7 @@ import type { Event, TicketType } from '@/prisma/generated/prisma/client';
 
 type EventWithTicketTypes = Event & {
   ticketTypes: Pick<TicketType, 'id' | 'basePrice'>[];
+  images: { url: string }[];
 };
 
 interface PublicEventsListProps {
