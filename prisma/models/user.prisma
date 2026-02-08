@@ -12,13 +12,21 @@ model User {
 
   accounts              Account[]
   sessions              Session[]
-  organizerApplications OrganizerApplication[]
+  tenants               Tenant[]
+  applicationNotes      ApplicationNote[]
+  memberships           TenantMember[]
+  sentInvitations       TenantInvitation[] @relation("InvitationInviter")
+
+  // Cart and orders
+  cart                  Cart?
+  orders                Order[]
+  ownedTickets          Ticket[]  @relation("TicketOwner")
+  heldTickets           Ticket[]  @relation("TicketHolder")
 
   @@map("users")
 }
 
 enum UserRole {
   USER
-  ORGANIZER
   ADMIN
 }

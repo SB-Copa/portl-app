@@ -1,0 +1,12 @@
+model EventImage {
+  id        String   @id @default(cuid())
+  eventId   String
+  url       String
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([eventId])
+  @@map("event_images")
+}

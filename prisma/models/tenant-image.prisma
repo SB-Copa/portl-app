@@ -1,0 +1,12 @@
+model TenantImage {
+  id        String   @id @default(cuid())
+  tenantId  String
+  url       String
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("tenant_images")
+}

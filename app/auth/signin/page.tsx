@@ -9,7 +9,8 @@ import { useSearchParams } from 'next/navigation';
 
 export default function SignInPage() {
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get('callbackUrl') || '/admin';
+  const callbackUrl = searchParams.get('callbackUrl') || '/account';
+  const message = searchParams.get('message');
   const [error, setError] = useState<string | null>(searchParams.get('error'));
   const [isLoading, setIsLoading] = useState(false);
 
@@ -27,26 +28,48 @@ export default function SignInPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 px-4 py-12 dark">
+    <div className="flex min-h-screen items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900">
+          <h1 className="text-3xl font-bold tracking-tight">
             Welcome back
           </h1>
-          <p className="mt-2 text-sm text-gray-600">
+          <p className="mt-2 text-sm">
             Sign in to your account to continue
           </p>
         </div>
 
         {/* Card */}
-        <div className="rounded-2xl border border-gray-200 bg-white p-8 shadow-lg shadow-gray-200/50">
-          {/* Error Message */}
-          {error && (
-            <div className="mb-6 rounded-lg bg-red-50 border border-red-100 p-4 text-sm text-red-800">
+        <div className="rounded-2xl border p-8 shadow-lg">
+          {/* Success Message */}
+          {message && (
+            <div className="mb-6 rounded-lg border border-green-500/30 bg-green-500/10 p-4 text-sm text-green-200">
               <div className="flex items-start gap-3">
                 <svg
-                  className="h-5 w-5 flex-shrink-0 text-red-500"
+                  className="h-5 w-5 flex-shrink-0"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+                <div>{message}</div>
+              </div>
+            </div>
+          )}
+
+          {/* Error Message */}
+          {error && (
+            <div className="mb-6 rounded-lg border p-4 text-sm">
+              <div className="flex items-start gap-3">
+                <svg
+                  className="h-5 w-5 flex-shrink-0"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -66,7 +89,7 @@ export default function SignInPage() {
           {/* Sign In Form */}
           <form action={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <label htmlFor="email" className="text-sm font-medium text-gray-900">
+              <label htmlFor="email" className="text-sm font-medium">
                 Email
               </label>
               <Input
@@ -81,9 +104,17 @@ export default function SignInPage() {
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="password" className="text-sm font-medium text-gray-900">
-                Password
-              </label>
+              <div className="flex items-center justify-between">
+                <label htmlFor="password" className="text-sm font-medium">
+                  Password
+                </label>
+                <Link
+                  href="/auth/forgot-password"
+                  className="text-xs font-medium transition-colors"
+                >
+                  Forgot password?
+                </Link>
+              </div>
               <Input
                 id="password"
                 name="password"
@@ -105,28 +136,17 @@ export default function SignInPage() {
           </form>
 
           {/* Footer */}
-          <div className="mt-6 text-center text-sm text-gray-600">
+          <div className="mt-6 text-center text-sm">
             Don&apos;t have an account?{' '}
             <Link
               href="/auth/signup"
-              className="font-medium text-gray-900 hover:text-gray-700 transition-colors"
+              className="font-medium transition-colors"
             >
               Sign up
             </Link>
           </div>
         </div>
 
-        {/* Terms */}
-        <p className="mt-6 text-center text-xs text-gray-500">
-          By continuing, you agree to our{' '}
-          <Link href="/terms" className="underline hover:text-gray-700">
-            Terms of Service
-          </Link>{' '}
-          and{' '}
-          <Link href="/privacy" className="underline hover:text-gray-700">
-            Privacy Policy
-          </Link>
-        </p>
       </div>
     </div>
   );

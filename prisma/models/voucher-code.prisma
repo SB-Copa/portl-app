@@ -1,0 +1,16 @@
+model VoucherCode {
+  id            String   @id @default(cuid())
+  promotionId   String
+  code          String   @unique // Globally unique voucher code
+  maxRedemptions Int?    // Per-code limit (in addition to promotion limit)
+  redeemedCount  Int     @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  promotion Promotion @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+  orders    Order[]
+
+  @@index([promotionId])
+  @@index([code])
+  @@map("voucher_codes")
+}

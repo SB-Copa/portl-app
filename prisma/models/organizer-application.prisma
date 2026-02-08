@@ -1,19 +1,28 @@
 model OrganizerApplication {
-  id        String                      @id @default(cuid())
-  userId    String
-  tenantId  String
-  status    OrganizerApplicationStatus  @default(NOT_STARTED)
-  currentStep Int                       @default(1)
+  id          String                     @id @default(cuid())
+  tenantId    String                     @unique
+  status      OrganizerApplicationStatus @default(NOT_STARTED)
+  currentStep Int                        @default(1)
 
-  // Step 1: Organizer Type
-  organizerType        OrganizerType?
-  organizerDescription String?        @db.Text
+  // Step 1: Event Portfolio (4 parts as JSON)
+  pastEvents       Json?
+  venuesWorkedWith Json?
+  artistsTalent    Json?
+  references       Json?
 
-  // Step 2: Event Portfolio (stored as JSON)
-  eventPortfolio Json?
+  // Step 2: Identity Verification (placeholder URLs for Vercel Blob)
+  governmentIdUrl String?
+  selfieWithIdUrl String?
+  businessIdUrl   String? // Optional
 
-  // Step 3: Compliance
-  complianceAcknowledged Boolean @default(false)
+  // Step 3: Agreements
+  tosAccepted                Boolean @default(false)
+  organizerAgreementAccepted Boolean @default(false)
+  privacyPolicyAccepted      Boolean @default(false)
+  communityGuidelinesAccepted Boolean @default(false)
+
+  // Review tracking
+  reviewStartedAt DateTime?
 
   submittedAt DateTime?
   reviewedAt  DateTime?
@@ -23,11 +32,9 @@ model OrganizerApplication {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  notes   ApplicationNote[]
 
-  @@unique([userId, tenantId])
-  @@index([userId])
   @@index([tenantId])
   @@index([status])
   @@map("organizer_applications")

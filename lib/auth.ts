@@ -14,6 +14,7 @@ export async function getSession() {
  */
 export async function getCurrentUser() {
   const session = await auth();
+  // console.log('getCurrentUser - Full session:', JSON.stringify(session, null, 2));
   return session?.user ?? null;
 }
 

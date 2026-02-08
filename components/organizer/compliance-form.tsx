@@ -41,13 +41,13 @@ export function ComplianceForm({ initialData, onSubmit }: ComplianceFormProps) {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+          <div className="rounded-lg border bg-muted/50 p-4">
             <div className="flex">
-              <AlertCircle className="h-5 w-5 text-blue-600 mr-3 flex-shrink-0 mt-0.5" />
-              <div className="text-sm text-blue-800">
-                <p className="font-medium mb-1">Important Information</p>
+              <AlertCircle className="h-5 w-5 text-muted-foreground mr-3 flex-shrink-0 mt-0.5" />
+              <div className="text-sm text-muted-foreground">
+                <p className="font-medium mb-1 text-foreground">Important Information</p>
                 <p>
-                  By completing this application, you're taking the first step to becoming an organizer on our platform. 
+                  By completing this application, you&apos;re taking the first step to becoming an organizer on our platform.
                   We need to ensure all organizers comply with our standards and policies.
                 </p>
               </div>
@@ -67,9 +67,9 @@ export function ComplianceForm({ initialData, onSubmit }: ComplianceFormProps) {
                 <Label htmlFor="terms" className="cursor-pointer text-base font-medium">
                   Platform Terms & Conditions
                 </Label>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-muted-foreground">
                   I agree to abide by the platform's terms of service and organizer guidelines. 
-                  <button className="text-blue-600 hover:underline ml-1">
+                  <button className="text-primary hover:underline ml-1">
                     View terms
                   </button>
                 </p>
@@ -88,10 +88,10 @@ export function ComplianceForm({ initialData, onSubmit }: ComplianceFormProps) {
                 <Label htmlFor="policies" className="cursor-pointer text-base font-medium">
                   Event Compliance
                 </Label>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-muted-foreground">
                   I confirm that all events I organize will comply with platform policies, local laws, 
                   and regulations. I understand that non-compliant events may be removed.
-                  <button className="text-blue-600 hover:underline ml-1">
+                  <button className="text-primary hover:underline ml-1">
                     View policies
                   </button>
                 </p>
@@ -110,7 +110,7 @@ export function ComplianceForm({ initialData, onSubmit }: ComplianceFormProps) {
                 <Label htmlFor="verification" className="cursor-pointer text-base font-medium">
                   Future Verification
                 </Label>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-muted-foreground">
                   I acknowledge that additional verification or documentation may be required in the future, 
                   depending on event type, size, or platform requirements.
                 </p>
@@ -118,10 +118,10 @@ export function ComplianceForm({ initialData, onSubmit }: ComplianceFormProps) {
             </div>
           </div>
 
-          <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-            <p className="text-sm text-gray-600">
-              <strong>Next Steps:</strong> After submission, our team will review your application. 
-              You'll receive an email notification once the review is complete. This typically takes 2-3 business days.
+          <div className="rounded-lg border bg-muted/50 p-4">
+            <p className="text-sm text-muted-foreground">
+              <strong>Next Steps:</strong> After submission, our team will review your application.
+              You&apos;ll receive an email notification once the review is complete. This typically takes 2-3 business days.
             </p>
           </div>
         </CardContent>

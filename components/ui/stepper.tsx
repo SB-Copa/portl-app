@@ -29,10 +29,10 @@ export function Stepper({ steps, currentStep, onStepClick }: StepperProps) {
                 'group flex w-full flex-col border-l-4 py-2 pl-4 md:border-l-0 md:border-t-4 md:pb-0 md:pl-0 md:pt-4',
                 'transition-colors duration-200',
                 step.status === 'completed'
-                  ? 'border-blue-600 hover:border-blue-800'
+                  ? 'border-primary hover:border-primary/80'
                   : step.status === 'in_progress'
-                    ? 'border-blue-600'
-                    : 'border-gray-200',
+                    ? 'border-primary'
+                    : 'border-muted-foreground/25',
                 step.status === 'not_started' &&
                   step.id > currentStep &&
                   'cursor-not-allowed opacity-50'
@@ -43,21 +43,21 @@ export function Stepper({ steps, currentStep, onStepClick }: StepperProps) {
                   className={cn(
                     'flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full',
                     step.status === 'completed'
-                      ? 'bg-blue-600'
+                      ? 'bg-primary'
                       : step.status === 'in_progress'
-                        ? 'border-2 border-blue-600 bg-white'
-                        : 'border-2 border-gray-300 bg-white'
+                        ? 'border-2 border-primary bg-background'
+                        : 'border-2 border-muted-foreground/25 bg-background'
                   )}
                 >
                   {step.status === 'completed' ? (
-                    <Check className="h-6 w-6 text-white" />
+                    <Check className="h-6 w-6 text-primary-foreground" />
                   ) : (
                     <span
                       className={cn(
                         'text-sm font-medium',
                         step.status === 'in_progress'
-                          ? 'text-blue-600'
-                          : 'text-gray-500'
+                          ? 'text-primary'
+                          : 'text-muted-foreground'
                       )}
                     >
                       {step.id}
@@ -69,14 +69,14 @@ export function Stepper({ steps, currentStep, onStepClick }: StepperProps) {
                     className={cn(
                       'text-sm font-medium',
                       step.status === 'completed' || step.status === 'in_progress'
-                        ? 'text-blue-600'
-                        : 'text-gray-500'
+                        ? 'text-primary'
+                        : 'text-muted-foreground'
                     )}
                   >
                     {step.title}
                   </span>
                   {step.description && (
-                    <span className="text-sm text-gray-500">{step.description}</span>
+                    <span className="text-sm text-muted-foreground">{step.description}</span>
                   )}
                 </div>
               </div>

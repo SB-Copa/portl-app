@@ -1,0 +1,59 @@
+model Order {
+  id             String      @id @default(cuid())
+  orderNumber    String      @unique // Human-readable: PORTL-XXXXXX
+  userId         String               // Purchaser
+  tenantId       String
+  eventId        String
+  status         OrderStatus @default(PENDING)
+
+  // Pricing breakdown
+  subtotal       Int         // Sum of items before discounts (PHP)
+  discountAmount Int         @default(0) // Total discounts applied
+  serviceFee     Int         @default(0) // Platform fee (PHP)
+  total          Int         // Final amount (PHP)
+
+  // Promotion tracking
+  voucherCodeId  String?
+  promotionId    String?
+
+  // Contact info (for order confirmation)
+  contactEmail   String
+  contactPhone   String?
+
+  // Payment
+  metadata          Json?       // Store attendee data, payment session info
+  paymentSessionId  String?     // PayMongo checkout session ID (cs_xxx)
+
+  expiresAt      DateTime?   // For PENDING orders (time limit to complete)
+  completedAt    DateTime?
+  cancelledAt    DateTime?
+
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Restrict)
+  tenant       Tenant        @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  event        Event         @relation(fields: [eventId], references: [id], onDelete: Restrict)
+  voucherCode  VoucherCode?  @relation(fields: [voucherCodeId], references: [id], onDelete: SetNull)
+  promotion    Promotion?    @relation(fields: [promotionId], references: [id], onDelete: SetNull)
+  items        OrderItem[]
+  tickets      Ticket[]
+  transactions Transaction[]
+
+  @@index([userId])
+  @@index([tenantId])
+  @@index([eventId])
+  @@index([status])
+  @@index([orderNumber])
+  @@index([expiresAt])
+  @@index([paymentSessionId])
+  @@map("orders")
+}
+
+enum OrderStatus {
+  PENDING           // Created, awaiting payment
+  CONFIRMED         // Payment successful, tickets generated
+  CANCELLED         // Cancelled by user or expired
+  REFUNDED          // Full refund processed
+  PARTIALLY_REFUNDED // Partial refund
+}

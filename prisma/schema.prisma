@@ -6,3 +6,6 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+// Seed script location (run with: pnpm prisma db seed)
+// Or manually: npx tsx prisma/seed.ts

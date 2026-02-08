@@ -54,37 +54,37 @@ export function OrganizerTypeForm({ initialData, onSave, onSaveAndExit }: Organi
           <div className="space-y-4">
             <Label>Select your organizer type *</Label>
             <RadioGroup value={organizerType} onValueChange={(value) => setOrganizerType(value as OrganizerType)}>
-              <div className="flex items-start space-x-3 space-y-0 rounded-md border p-4 hover:bg-gray-50 transition-colors">
+              <div className="flex items-start space-x-3 space-y-0 rounded-md border p-4 hover:bg-muted/50 transition-colors">
                 <RadioGroupItem value="INDIVIDUAL" id="individual" />
                 <div className="flex-1 space-y-1">
                   <Label htmlFor="individual" className="cursor-pointer font-medium">
                     Individual / Solo Organizer
                   </Label>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-muted-foreground">
                     You organize events independently as an individual
                   </p>
                 </div>
               </div>
               
-              <div className="flex items-start space-x-3 space-y-0 rounded-md border p-4 hover:bg-gray-50 transition-colors">
+              <div className="flex items-start space-x-3 space-y-0 rounded-md border p-4 hover:bg-muted/50 transition-colors">
                 <RadioGroupItem value="TEAM" id="team" />
                 <div className="flex-1 space-y-1">
                   <Label htmlFor="team" className="cursor-pointer font-medium">
                     Team / Collective
                   </Label>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-muted-foreground">
                     You work with a team or collective to organize events
                   </p>
                 </div>
               </div>
               
-              <div className="flex items-start space-x-3 space-y-0 rounded-md border p-4 hover:bg-gray-50 transition-colors">
+              <div className="flex items-start space-x-3 space-y-0 rounded-md border p-4 hover:bg-muted/50 transition-colors">
                 <RadioGroupItem value="COMPANY" id="company" />
                 <div className="flex-1 space-y-1">
                   <Label htmlFor="company" className="cursor-pointer font-medium">
                     Company / Brand
                   </Label>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-muted-foreground">
                     You represent a registered company or brand
                   </p>
                 </div>
@@ -101,7 +101,7 @@ export function OrganizerTypeForm({ initialData, onSave, onSaveAndExit }: Organi
               onChange={(e) => setDescription(e.target.value)}
               rows={4}
             />
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-muted-foreground">
               This helps us better understand your background
             </p>
           </div>

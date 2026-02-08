@@ -7,6 +7,7 @@ import * as z from 'zod';
 import { updateProfileAction } from '@/app/actions/profile';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { FileUpload } from '@/components/ui/file-upload';
 import { CheckCircle2, AlertCircle } from 'lucide-react';
 
 const profileSchema = z.object({
@@ -18,12 +19,14 @@ const profileSchema = z.object({
 type ProfileFormData = z.infer<typeof profileSchema>;
 
 interface ProfileFormProps {
-  defaultValues: ProfileFormData;
+  defaultValues: ProfileFormData & { imageUrl?: string };
 }
 
 export function ProfileForm({ defaultValues }: ProfileFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [imageUrl, setImageUrl] = useState<string | undefined>(defaultValues.imageUrl);
+  const [imageChanged, setImageChanged] = useState(false);
 
   const {
     register,
@@ -43,6 +46,10 @@ export function ProfileForm({ defaultValues }: ProfileFormProps) {
     formData.append('lastName', data.lastName);
     formData.append('email', data.email);
 
+    if (imageChanged) {
+      formData.append('image', imageUrl || '');
+    }
+
     const result = await updateProfileAction(formData);
 
     setIsLoading(false);
@@ -51,14 +58,17 @@ export function ProfileForm({ defaultValues }: ProfileFormProps) {
       setMessage({ type: 'error', text: result.error });
     } else if (result.success) {
       setMessage({ type: 'success', text: 'Profile updated successfully!' });
-      // Refresh the page to show updated data
       window.location.reload();
     }
   };
 
+  const handleImageChange = (url: string | undefined) => {
+    setImageUrl(url);
+    setImageChanged(true);
+  };
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      {/* Message */}
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       {message && (
         <div
           className={`rounded-lg border p-4 ${
@@ -77,6 +87,13 @@ export function ProfileForm({ defaultValues }: ProfileFormProps) {
           </div>
         </div>
       )}
+
+      <FileUpload
+        label="Profile Photo"
+        folder="avatars"
+        value={imageUrl}
+        onChange={handleImageChange}
+      />
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
@@ -127,7 +144,7 @@ export function ProfileForm({ defaultValues }: ProfileFormProps) {
       </div>
 
       <div className="flex justify-end pt-2">
-        <Button type="submit" disabled={isLoading || !isDirty}>
+        <Button type="submit" disabled={isLoading || (!isDirty && !imageChanged)}>
           {isLoading ? 'Saving...' : 'Save Changes'}
         </Button>
       </div>

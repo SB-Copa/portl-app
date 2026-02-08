@@ -1,4 +1,3 @@
-import React from 'react'
 import { Star, Bell, Heart, ArrowRight, MapPin } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'

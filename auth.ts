@@ -5,9 +5,18 @@ import { prisma } from '@/lib/prisma';
 import type { NextAuthConfig } from 'next-auth';
 import bcrypt from 'bcryptjs';
 
-// Note: Type assertion needed due to @auth/core version mismatch
-// This will be resolved after running: pnpm install
-// The override in package.json forces @auth/core to 0.41.0
+const isSecure = process.env.NODE_ENV === 'production';
+
+// Root domain for cookie sharing and redirect validation
+const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'lvh.me:3000';
+const rootHostname = rootDomain.split(':')[0]; // e.g. "lvh.me"
+
+// Derive cookie domain from root domain so session cookies are shared across subdomains
+const cookieDomain = (() => {
+  if (rootHostname === 'localhost') return '.localhost';
+  return '.' + rootHostname; // e.g. ".lvh.me" or ".portl.com"
+})();
+
 export const config = {
   adapter: PrismaAdapter(prisma) as any,
   providers: [
@@ -60,10 +69,40 @@ export const config = {
     error: '/auth/error',
   },
   callbacks: {
+    async redirect({ url, baseUrl }) {
+      // Allow relative URLs
+      if (url.startsWith('/')) return `${baseUrl}${url}`;
+      // Allow same origin
+      if (url.startsWith(baseUrl)) return url;
+      // Allow any subdomain of root domain (e.g. acme.lvh.me:3000)
+      try {
+        const target = new URL(url);
+        const targetHostname = target.hostname;
+        if (
+          targetHostname === rootHostname ||
+          targetHostname.endsWith(`.${rootHostname}`)
+        ) {
+          return url;
+        }
+      } catch {}
+      return baseUrl;
+    },
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
         token.role = user.role;
+      }
+      // Handle stale ORGANIZER tokens from before role restructure
+      if (token.role === 'ORGANIZER') {
+        try {
+          const dbUser = await prisma.user.findUnique({
+            where: { id: token.id as string },
+            select: { role: true },
+          });
+          token.role = dbUser?.role ?? 'USER';
+        } catch {
+          token.role = 'USER';
+        }
       }
       return token;
     },
@@ -79,7 +118,31 @@ export const config = {
     strategy: 'jwt', // Must use JWT for Credentials provider
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
+  // Cookie domain for cross-subdomain sharing (admin.domain.com needs access)
+  // .localhost in dev, .portl.com (or similar) in production
+  cookies: {
+    sessionToken: {
+      name: isSecure ? '__Secure-authjs.session-token' : 'authjs.session-token',
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: isSecure,
+        domain: cookieDomain,
+      },
+    },
+    callbackUrl: {
+      name: isSecure ? '__Secure-authjs.callback-url' : 'authjs.callback-url',
+      options: {
+        sameSite: 'lax',
+        path: '/',
+        secure: isSecure,
+        domain: cookieDomain,
+      },
+    },
+  },
   trustHost: true,
+  useSecureCookies: isSecure,
 } satisfies NextAuthConfig;
 
 export const { handlers, auth, signIn, signOut } = NextAuth(config);

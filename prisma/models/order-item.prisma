@@ -1,0 +1,22 @@
+model OrderItem {
+  id             String   @id @default(cuid())
+  orderId        String
+  ticketTypeId   String
+  priceTierId    String?
+  seatId         String?  // For SEAT tickets
+  quantity       Int      @default(1)
+  unitPrice      Int      // Price per unit at time of purchase (PHP)
+  discountAmount Int      @default(0) // Item-level discount
+  totalPrice     Int      // (unitPrice * quantity) - discountAmount
+  createdAt      DateTime @default(now())
+
+  order      Order                 @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  ticketType TicketType            @relation(fields: [ticketTypeId], references: [id], onDelete: Restrict)
+  priceTier  TicketTypePriceTier?  @relation(fields: [priceTierId], references: [id], onDelete: SetNull)
+  seat       Seat?                 @relation(fields: [seatId], references: [id], onDelete: SetNull)
+  tickets    Ticket[]
+
+  @@index([orderId])
+  @@index([ticketTypeId])
+  @@map("order_items")
+}

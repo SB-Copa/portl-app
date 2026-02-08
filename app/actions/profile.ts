@@ -15,6 +15,7 @@ export async function updateProfileAction(formData: FormData) {
   const firstName = formData.get('firstName') as string;
   const lastName = formData.get('lastName') as string;
   const email = formData.get('email') as string;
+  const image = formData.get('image') as string | null;
 
   if (!firstName || !lastName || !email) {
     return { error: 'First name, last name, and email are required' };
@@ -38,10 +39,12 @@ export async function updateProfileAction(formData: FormData) {
         firstName,
         lastName,
         email,
+        ...(image !== null && { image: image || null }),
       },
     });
 
     revalidatePath('/[tenant]/profile');
+    revalidatePath('/account/settings');
     return { success: true };
   } catch (error) {
     console.error('Profile update error:', error);

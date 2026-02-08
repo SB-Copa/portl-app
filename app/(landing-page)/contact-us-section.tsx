@@ -1,4 +1,3 @@
-import React from 'react'
 import { Users, MessageSquare, Share2, Trophy } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import CtaSection from './cta-section';
