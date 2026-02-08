@@ -1,6 +1,6 @@
 # Tenant-Scoped Ticketing System Documentation
 
-## Overview
+## Overview 
 
 The Ticketing System provides a comprehensive interface for organizers (tenants) to manage their own events, tables, seats, ticket types, price tiers, and promotions. Each organizer manages their events independently through their tenant dashboard.
 
