@@ -14,13 +14,20 @@ import { auth } from '@/auth'
  * - Prisma (use Node.js runtime in pages/API routes instead)
  * - Full Node.js APIs
  */
+
+// TODO: Remove this flag (and the coming-soon block below) when ready to launch
+const COMING_SOON = true
+
 export async function proxy(request: NextRequest) {
     const host = request.headers.get('host') || ''
     const pathname = request.nextUrl.pathname
 
-    // Skip static files and API routes early
-    if (pathname.startsWith('/_next') || pathname.startsWith('/api')) {
-        return NextResponse.next()
+    // Temporary: redirect everything to coming soon page
+    if (COMING_SOON) {
+        if (pathname.startsWith('/coming-soon')) {
+            return NextResponse.next()
+        }
+        return NextResponse.redirect(new URL('/coming-soon', request.url))
     }
 
     const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'lvh.me:3000'
@@ -91,5 +98,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-    matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
+    matcher: ['/((?!api|_next/static|_next/image|images|favicon.ico).*)'],
 }
