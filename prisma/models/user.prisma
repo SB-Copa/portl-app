@@ -1,0 +1,32 @@
+model User {
+  id            String    @id @default(cuid())
+  firstName     String?
+  lastName      String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?   // For credentials authentication
+  role          UserRole  @default(USER)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts              Account[]
+  sessions              Session[]
+  tenants               Tenant[]
+  applicationNotes      ApplicationNote[]
+  memberships           TenantMember[]
+  sentInvitations       TenantInvitation[] @relation("InvitationInviter")
+
+  // Cart and orders
+  cart                  Cart?
+  orders                Order[]
+  ownedTickets          Ticket[]  @relation("TicketOwner")
+  heldTickets           Ticket[]  @relation("TicketHolder")
+
+  @@map("users")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}

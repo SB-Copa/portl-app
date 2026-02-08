@@ -1,61 +1,91 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { auth } from '@/auth'
 
-export function proxy(request: NextRequest) {
+/**
+ * Next.js 15 Proxy Function (replaces middleware)
+ *
+ * Subdomain-based routing:
+ * - admin.domain.com → rewrites to /admin routes
+ * - tenant.domain.com → rewrites to /t/tenant routes
+ * - Direct /t/* access on main domain → redirects to subdomain
+ *
+ * NOTE: This runs in Edge Runtime which doesn't support:
+ * - Prisma (use Node.js runtime in pages/API routes instead)
+ * - Full Node.js APIs
+ */
+export async function proxy(request: NextRequest) {
     const host = request.headers.get('host') || ''
     const pathname = request.nextUrl.pathname
 
-    // /admin route → redirect to admin. subdomain
-    if (pathname.startsWith('/admin') && !host.startsWith('admin.')) {
-        const adminUrl = new URL(request.url)
-        adminUrl.host = `admin.${host}`
-        // Remove /admin prefix from pathname
-        adminUrl.pathname = pathname.replace(/^\/admin/, '') || '/'
-        return NextResponse.redirect(adminUrl)
+    // Skip static files and API routes early
+    if (pathname.startsWith('/_next') || pathname.startsWith('/api')) {
+        return NextResponse.next()
     }
-    
-    // admin.domain.com → rewrite to /admin routes
-    if (host.startsWith('admin.')) {
+
+    const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'lvh.me:3000'
+    // Strip port for hostname comparison
+    const rootHostname = rootDomain.split(':')[0]
+    const currentHostname = host.split(':')[0]
+
+    // --- Admin subdomain ---
+    if (currentHostname === `admin.${rootHostname}`) {
         return NextResponse.rewrite(new URL(`/admin${pathname}`, request.url))
     }
 
-    // Multi-tenant routing: /[tenant]/... → tenant.localhost:3000/...
-    // Extract tenant name from pathname (first segment after /)
-    const tenantMatch = pathname.match(/^\/([^\/]+)/)
-    if (tenantMatch && tenantMatch[1]) {
-        const potentialTenant = tenantMatch[1]
-        // Skip reserved paths (admin is already handled above)
-        const reservedPaths = ['_next', 'api', 'admin']
-        
-        if (!reservedPaths.includes(potentialTenant) && !host.includes('.')) {
-            // We're on root domain with a tenant path → redirect to tenant subdomain
+    // /admin route on main domain → redirect to admin subdomain
+    if (pathname.startsWith('/admin') && currentHostname === rootHostname) {
+        const adminUrl = new URL(request.url)
+        adminUrl.host = `admin.${rootDomain}`
+        adminUrl.pathname = pathname.replace(/^\/admin/, '') || '/'
+        return NextResponse.redirect(adminUrl)
+    }
+
+    // --- Tenant subdomain ---
+    // Check if current host is a subdomain of root domain (not admin, not main)
+    if (
+        currentHostname !== rootHostname &&
+        currentHostname !== `admin.${rootHostname}` &&
+        currentHostname.endsWith(`.${rootHostname}`)
+    ) {
+        const subdomain = currentHostname.replace(`.${rootHostname}`, '')
+        // Rewrite to internal /t/[tenant] routes
+        return NextResponse.rewrite(new URL(`/t/${subdomain}${pathname}`, request.url))
+    }
+
+    // --- Main domain only below ---
+
+    // Redirect /t/[tenant]/* on main domain → tenant subdomain
+    if (pathname.startsWith('/t/') && currentHostname === rootHostname) {
+        const segments = pathname.split('/')
+        // segments: ['', 't', 'tenant-slug', ...rest]
+        const subdomain = segments[2]
+        if (subdomain) {
+            const rest = segments.slice(3).join('/')
             const tenantUrl = new URL(request.url)
-            tenantUrl.host = `${potentialTenant}.${host}`
-            // Remove the /[tenant] prefix from pathname
-            tenantUrl.pathname = pathname.replace(/^\/[^\/]+/, '') || '/'
+            tenantUrl.host = `${subdomain}.${rootDomain}`
+            tenantUrl.pathname = rest ? `/${rest}` : '/'
             return NextResponse.redirect(tenantUrl)
         }
     }
 
-    // *.domain.com (wildcard subdomains) → rewrite to /[tenant] routes
-    // Check if it's a subdomain (not www, not admin, not bare domain)
-    const hostname = host.split(':')[0] // Remove port
-    const subdomain = hostname.split('.')[0]
-    
-    // Check if we have a subdomain (e.g., tenant.localhost or tenant.example.com)
-    const isSubdomain = hostname.includes('.') && 
-                        subdomain && 
-                        subdomain !== 'www' && 
-                        subdomain !== 'admin' &&
-                        (hostname.includes('.localhost') || hostname.split('.').length > 2)
-    
-    if (isSubdomain) {
-        // Rewrite to /[tenant] dynamic route
-        return NextResponse.rewrite(new URL(`/${subdomain}${pathname}`, request.url))
+    // Redirect authenticated users away from auth pages (main domain only)
+    if (pathname.startsWith('/auth/') && currentHostname === rootHostname) {
+        try {
+            const session = await auth()
+            if (session?.user) {
+                return NextResponse.redirect(new URL('/account', request.url))
+            }
+        } catch {
+            const sessionCookie = request.cookies.get('authjs.session-token') ||
+                                 request.cookies.get('__Secure-authjs.session-token') ||
+                                 request.cookies.get('next-auth.session-token') ||
+                                 request.cookies.get('__Secure-next-auth.session-token')
+            if (sessionCookie) {
+                return NextResponse.redirect(new URL('/account', request.url))
+            }
+        }
     }
-
-    // domain.com/ → landing page (no rewrite needed, just serve /)
-    // domain.com/slug → your app routes
 
     return NextResponse.next()
 }

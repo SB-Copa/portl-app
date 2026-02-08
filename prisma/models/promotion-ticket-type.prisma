@@ -1,0 +1,14 @@
+model PromotionTicketType {
+  id           String     @id @default(cuid())
+  promotionId  String
+  ticketTypeId String
+  createdAt    DateTime   @default(now())
+
+  promotion  Promotion  @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+  ticketType TicketType @relation(fields: [ticketTypeId], references: [id], onDelete: Cascade)
+
+  @@unique([promotionId, ticketTypeId])
+  @@index([promotionId])
+  @@index([ticketTypeId])
+  @@map("promotion_ticket_types")
+}

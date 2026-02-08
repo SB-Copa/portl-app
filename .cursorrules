@@ -1,0 +1,46 @@
+## Coding Conventions
+
+### Server Actions
+- **Always use Server Actions** for server-side operations instead of API routes
+- Server Actions should be defined in `app/actions/` directory
+- Use `"use server"` directive at the top of action files
+
+### Form Handling
+- **Always use React Hook Form** with **Zod** for form validation and handling
+- Use Zod schemas for validation
+- Integrate React Hook Form with Server Actions for form submissions
+
+### React Imports
+- **Always use direct imports for hooks**: `import { useState, useEffect, useCallback } from 'react'`
+- **Always use direct imports for utilities**: `import { forwardRef, memo } from 'react'`
+- **Use type-only imports for types**: `import type { ComponentProps, ElementRef } from 'react'`
+- **Remove unnecessary React imports**: React 17+ doesn't require `import React from 'react'` for JSX
+- **Only import what you use**: Don't import React if you're only using JSX (no hooks or React APIs)
+- **shadcn/ui components exception**: Do not modify shadcn/ui components in `components/ui/` - they use `import * as React` and `React.ComponentProps` patterns by design
+
+### Prisma Types
+- **Always use generated Prisma types** from `@/prisma/generated/prisma/client`
+- **Never manually define types** that duplicate Prisma-generated types
+- **For models with relationships**, use the pattern: `Model & Prisma.ModelGetPayload<{include: {...}}>`
+- **Match type includes** with actual Prisma query includes for type safety
+- Example:
+  ```typescript
+  import { OrganizerApplication, Prisma } from '@/prisma/generated/prisma/client';
+  
+  type ApplicationWithRelations = OrganizerApplication & Prisma.OrganizerApplicationGetPayload<{
+    include: {
+      tenant: {
+        include: {
+          owner: {
+            select: {
+              id: true;
+              email: true;
+              firstName: true;
+              lastName: true;
+            };
+          };
+        };
+      };
+    };
+  }>;
+  ```

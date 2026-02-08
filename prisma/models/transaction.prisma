@@ -1,0 +1,40 @@
+model Transaction {
+  id              String            @id @default(cuid())
+  orderId         String
+  type            TransactionType
+  amount          Int               // Amount in PHP (positive for payment, negative for refund)
+  status          TransactionStatus @default(PENDING)
+
+  // Payment gateway info
+  provider        String?           // e.g., "paymongo", "gcash", "maya"
+  providerTxnId   String?           // External transaction ID
+  providerStatus  String?           // Raw status from provider
+
+  // Metadata
+  metadata        Json?             // Additional provider-specific data
+  failureReason   String?
+
+  processedAt     DateTime?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Restrict)
+
+  @@index([orderId])
+  @@index([status])
+  @@index([providerTxnId])
+  @@map("transactions")
+}
+
+enum TransactionType {
+  PAYMENT // Customer payment
+  REFUND  // Full/partial refund
+}
+
+enum TransactionStatus {
+  PENDING    // Awaiting processing
+  PROCESSING // Being processed by gateway
+  COMPLETED  // Successfully processed
+  FAILED     // Failed to process
+  CANCELLED  // Cancelled before processing
+}

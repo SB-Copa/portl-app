@@ -1,0 +1,47 @@
+model Tenant {
+  id                    String       @id @default(cuid())
+  subdomain             String       @unique
+  name                  String
+  businessEmail         String
+  businessPhone         String
+  contactEmail          String?
+  contactPhone          String?
+  sameAsBusinessContact Boolean      @default(true)
+  status                TenantStatus @default(INACTIVE)
+  type                  TenantType   @default(ORGANIZER)
+  ownerId               String
+  logoUrl               String?
+  bannerUrl             String?
+  tagline               String?
+  description           String?      @db.Text
+  socialInstagram       String?
+  socialFacebook        String?
+  socialTwitter         String?
+  socialTiktok          String?
+  socialWebsite         String?
+  createdAt             DateTime     @default(now())
+  updatedAt             DateTime     @updatedAt
+
+  owner       User                  @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  application OrganizerApplication?
+  events      Event[]
+  orders      Order[]
+  members     TenantMember[]
+  invitations TenantInvitation[]
+  images      TenantImage[]
+
+  @@index([ownerId])
+  @@map("tenants")
+}
+
+enum TenantStatus {
+  INACTIVE
+  ACTIVE
+  SUSPENDED
+}
+
+enum TenantType {
+  ORGANIZER
+  VENUE
+  ARTIST
+}

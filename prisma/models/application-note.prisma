@@ -1,0 +1,15 @@
+model ApplicationNote {
+  id            String   @id @default(cuid())
+  applicationId String
+  userId        String
+  note          String   @db.Text
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  application OrganizerApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  user        User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([applicationId])
+  @@index([userId])
+  @@map("application_notes")
+}
