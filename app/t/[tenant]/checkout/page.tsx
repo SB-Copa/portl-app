@@ -5,7 +5,7 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Loader2, ArrowLeft, AlertCircle } from 'lucide-react';
-import { CheckoutSteps, OrderReview, AttendeeForm, PaymentStep, type AttendeeData } from '@/components/checkout';
+import { CheckoutSteps, OrderReview, AttendeeForm, PaymentStep, PaymentCancelledPrompt, type AttendeeData } from '@/components/checkout';
 import { initializeCheckoutAction, getOrderForCheckoutAction, cancelOrderAction, getPendingOrderForTenantAction, type OrderWithRelations } from '@/app/actions/checkout';
 import { getCartForTenantAction } from '@/app/actions/cart';
 import { mainUrl } from '@/lib/url';
@@ -24,6 +24,7 @@ export default function CheckoutPage() {
   const { data: session, status } = useSession();
   const tenantSubdomain = params.tenant as string;
   const isResume = searchParams.get('resume') === 'true';
+  const isPaymentCancelled = searchParams.get('payment_cancelled') === 'true';
 
   const [currentStep, setCurrentStep] = useState(1);
   const [order, setOrder] = useState<OrderWithRelations | null>(null);
@@ -31,6 +32,7 @@ export default function CheckoutPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [showPaymentCancelledPrompt, setShowPaymentCancelledPrompt] = useState(false);
 
   // Ref to prevent duplicate initialization (React Strict Mode runs effects twice)
   const initializingRef = useRef(false);
@@ -67,6 +69,9 @@ export default function CheckoutPage() {
             const metadata = existingOrderResult.data.metadata as { attendees?: AttendeeData[] } | null;
             if (metadata?.attendees) {
               setAttendees(metadata.attendees);
+            }
+            if (isPaymentCancelled) {
+              setShowPaymentCancelledPrompt(true);
             }
           }
 
@@ -112,7 +117,12 @@ export default function CheckoutPage() {
     };
 
     initCheckout();
-  }, [status, tenantSubdomain, router, isResume]);
+  }, [status, tenantSubdomain, router, isResume, isPaymentCancelled]);
+
+  const handleRetryPayment = () => {
+    setShowPaymentCancelledPrompt(false);
+    setCurrentStep(3);
+  };
 
   const handleOrderUpdate = (updatedOrder: OrderWithRelations) => {
     setOrder(updatedOrder);
@@ -186,6 +196,16 @@ export default function CheckoutPage() {
           </Button>
         </div>
       </div>
+    );
+  }
+
+  // Payment cancelled prompt
+  if (showPaymentCancelledPrompt) {
+    return (
+      <PaymentCancelledPrompt
+        order={order}
+        onRetryPayment={handleRetryPayment}
+      />
     );
   }
 

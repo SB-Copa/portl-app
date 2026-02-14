@@ -10,6 +10,7 @@ import { Loader2, CreditCard, ExternalLink, CheckCircle2 } from 'lucide-react';
 import { createPaymentSessionAction, confirmFreeOrderAction, type OrderWithRelations } from '@/app/actions/checkout';
 import { useRouter } from 'next/navigation';
 import type { AttendeeData } from './attendee-form';
+import { formatPhp } from '@/lib/format';
 
 interface PaymentStepProps {
   order: OrderWithRelations;
@@ -131,19 +132,19 @@ export function PaymentStep({
               {order.items.map((item) => (
                 <div key={item.id} className="flex justify-between text-sm">
                   <span>{item.ticketType.name} x {item.quantity}</span>
-                  <span>PHP {item.totalPrice.toLocaleString()}</span>
+                  <span>{formatPhp(item.totalPrice)}</span>
                 </div>
               ))}
               {order.discountAmount > 0 && (
                 <div className="flex justify-between text-sm text-green-600">
                   <span>Discount</span>
-                  <span>-PHP {order.discountAmount.toLocaleString()}</span>
+                  <span>-{formatPhp(order.discountAmount)}</span>
                 </div>
               )}
               <Separator className="my-2" />
               <div className="flex justify-between font-semibold">
                 <span>Total</span>
-                <span>PHP {order.total.toLocaleString()}</span>
+                <span>{formatPhp(order.total)}</span>
               </div>
             </div>
           </div>

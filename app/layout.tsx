@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import type { Metadata } from 'next';
-import { Inter_Tight, Geist_Mono } from 'next/font/google';
+import { Inter_Tight, Geist_Mono, Manrope, Playfair_Display } from 'next/font/google';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { SessionProvider } from '@/components/providers/session-provider';
 import { CartProvider, CartDrawer } from '@/components/cart';
@@ -19,6 +19,18 @@ const geistMono = Geist_Mono({
   display: 'swap',
 });
 
+const manrope = Manrope({
+  variable: '--font-manrope',
+  subsets: ['latin'],
+  display: 'swap',
+});
+
+const playfairDisplay = Playfair_Display({
+  variable: '--font-playfair',
+  subsets: ['latin'],
+  display: 'swap',
+});
+
 export const metadata: Metadata = {
   title: 'Portl',
   description: 'Portl'
@@ -31,7 +43,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${interTight.variable} ${geistMono.variable} antialiased`}>
+      <body className={`${interTight.variable} ${geistMono.variable} ${manrope.variable} ${playfairDisplay.variable} antialiased`}>
         <SessionProvider>
           <CartProvider>
             {children}

@@ -47,7 +47,7 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
         notFound()
     }
 
-    const order = result.data
+    const order = result.data as import('@/app/actions/orders').OrderWithRelations
 
     const formatDate = (date: Date) => {
         return new Date(date).toLocaleDateString('en-US', {

@@ -3,14 +3,25 @@
 import { requireAuth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
+import {
+  voucherCodeApplySchema,
+  saveAttendeesSchema,
+  createPaymentSessionSchema,
+  cancelOrderSchema,
+} from '@/lib/validations/checkout';
 import type { SaveAttendeesData, CompleteCheckoutData, VoucherCodeApplyData, CreatePaymentSessionData } from '@/lib/validations/checkout';
+import { formatPhp } from '@/lib/format';
 import type { Order, OrderItem, Ticket, Event, TicketType, Tenant, Promotion, VoucherCode, Prisma } from '@/prisma/generated/prisma/client';
 import { nanoid } from 'nanoid';
 import { createCheckoutSession, retrieveCheckoutSession } from '@/lib/paymongo';
 import { tenantUrl, mainUrl } from '@/lib/url';
 import { sendOrderConfirmationEmail } from '@/lib/email';
 
-// Order expiration time in minutes
+// Order lifecycle:
+// 1. Order created → expiresAt = now + 15 min (ORDER_EXPIRATION_MINUTES)
+// 2. Payment session created → expiresAt extended to now + 30 min (PAYMENT_SESSION_EXPIRATION_MINUTES)
+// 3. Payment confirmed → expiresAt cleared (null)
+// 4. Cron (every 5 min) and opportunistic cleanup cancel orders past expiresAt
 const ORDER_EXPIRATION_MINUTES = 15;
 
 /**
@@ -39,9 +50,7 @@ async function sendConfirmationEmailForOrder(orderId: string): Promise<void> {
       year: 'numeric',
     });
 
-    const total = order.total === 0
-      ? 'FREE'
-      : new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(order.total / 100);
+    const total = formatPhp(order.total);
 
     await sendOrderConfirmationEmail({
       to: email,
@@ -345,6 +354,16 @@ export async function applyVoucherCodeAction(
   data: VoucherCodeApplyData
 ): Promise<{ data: OrderWithRelations } | { error: string }> {
   try {
+    const parsedOrderId = cancelOrderSchema.safeParse({ orderId });
+    if (!parsedOrderId.success) {
+      return { error: parsedOrderId.error.issues[0]?.message || 'Invalid order ID' };
+    }
+
+    const parsed = voucherCodeApplySchema.safeParse(data);
+    if (!parsed.success) {
+      return { error: parsed.error.issues[0]?.message || 'Invalid input' };
+    }
+
     const session = await requireAuth();
     const userId = session.user.id;
 
@@ -494,12 +513,17 @@ export async function removeVoucherCodeAction(
   orderId: string
 ): Promise<{ data: OrderWithRelations } | { error: string }> {
   try {
+    const parsed = cancelOrderSchema.safeParse({ orderId });
+    if (!parsed.success) {
+      return { error: parsed.error.issues[0]?.message || 'Invalid order ID' };
+    }
+
     const session = await requireAuth();
     const userId = session.user.id;
 
     // Find order and verify ownership
     const order = await prisma.order.findUnique({
-      where: { id: orderId },
+      where: { id: parsed.data.orderId },
     });
 
     if (!order) {
@@ -563,10 +587,15 @@ export async function saveAttendeesAction(
   data: SaveAttendeesData
 ): Promise<{ data: OrderWithRelations } | { error: string }> {
   try {
+    const parsed = saveAttendeesSchema.safeParse(data);
+    if (!parsed.success) {
+      return { error: parsed.error.issues[0]?.message || 'Invalid input' };
+    }
+
     const session = await requireAuth();
     const userId = session.user.id;
 
-    const { orderId, attendees } = data;
+    const { orderId, attendees } = parsed.data;
 
     // Find order and verify ownership
     const order = await prisma.order.findUnique({
@@ -834,6 +863,8 @@ async function cancelExpiredOrder(orderId: string): Promise<void> {
       },
     });
 
+    // Defensive: tickets are normally created only after payment confirmation,
+    // so this is a no-op for typical PENDING orders. Included as a safeguard.
     await tx.ticket.updateMany({
       where: { orderId },
       data: { status: 'CANCELLED' },
@@ -865,16 +896,74 @@ async function cleanupExpiredOrders(userId: string, tenantId: string): Promise<v
 }
 
 /**
+ * Clean up all expired PENDING orders globally.
+ * Used by the cron job to release abandoned inventory.
+ */
+export async function cleanupAllExpiredOrders(): Promise<number> {
+  const expiredOrders = await prisma.order.findMany({
+    where: {
+      status: 'PENDING',
+      expiresAt: { lt: new Date() },
+    },
+    select: { id: true },
+  });
+
+  let cancelled = 0;
+  for (const order of expiredOrders) {
+    try {
+      await cancelExpiredOrder(order.id);
+      cancelled++;
+    } catch (error) {
+      console.error(`Failed to cancel expired order ${order.id}:`, error);
+    }
+  }
+
+  return cancelled;
+}
+
+/**
+ * Clean up expired PENDING orders for a specific tenant.
+ * Used for opportunistic cleanup on public pages.
+ */
+export async function cleanupExpiredOrdersForTenant(tenantId: string): Promise<number> {
+  const expiredOrders = await prisma.order.findMany({
+    where: {
+      tenantId,
+      status: 'PENDING',
+      expiresAt: { lt: new Date() },
+    },
+    select: { id: true },
+  });
+
+  let cancelled = 0;
+  for (const order of expiredOrders) {
+    try {
+      await cancelExpiredOrder(order.id);
+      cancelled++;
+    } catch (error) {
+      console.error(`Failed to cancel expired order ${order.id}:`, error);
+    }
+  }
+
+  return cancelled;
+}
+
+/**
  * Confirm a free order (total = 0) without payment gateway
  */
 export async function confirmFreeOrderAction(
   data: CreatePaymentSessionData
 ): Promise<{ data: { orderId: string } } | { error: string }> {
   try {
+    const parsed = createPaymentSessionSchema.safeParse(data);
+    if (!parsed.success) {
+      return { error: parsed.error.issues[0]?.message || 'Invalid input' };
+    }
+
     const session = await requireAuth();
     const userId = session.user.id;
 
-    const { orderId, contactEmail, contactPhone, attendees } = data;
+    const { orderId, contactEmail, contactPhone, attendees } = parsed.data;
 
     const order = await prisma.order.findUnique({
       where: { id: orderId },
@@ -979,10 +1068,15 @@ export async function createPaymentSessionAction(
   data: CreatePaymentSessionData
 ): Promise<{ data: { checkoutUrl: string } } | { error: string }> {
   try {
+    const parsed = createPaymentSessionSchema.safeParse(data);
+    if (!parsed.success) {
+      return { error: parsed.error.issues[0]?.message || 'Invalid input' };
+    }
+
     const session = await requireAuth();
     const userId = session.user.id;
 
-    const { orderId, contactEmail, contactPhone, attendees } = data;
+    const { orderId, contactEmail, contactPhone, attendees } = parsed.data;
 
     // Find order with relations
     const order = await prisma.order.findUnique({
@@ -1059,11 +1153,11 @@ export async function createPaymentSessionAction(
 
     const checkoutResult = await createCheckoutSession({
       lineItems: finalLineItems,
-      paymentMethodTypes: ['qrph', 'gcash', 'paymaya'],
+      paymentMethodTypes: ['qrph'],
       description: `Order ${order.orderNumber} - ${order.event.name}`,
       referenceNumber: order.orderNumber,
       successUrl: tenantUrl(subdomain, `/checkout/success/${orderId}`),
-      cancelUrl: tenantUrl(subdomain, '/checkout?resume=true'),
+      cancelUrl: tenantUrl(subdomain, '/checkout?resume=true&payment_cancelled=true'),
       sendEmailReceipt: true,
       metadata: {
         orderId: order.id,
@@ -1126,6 +1220,7 @@ export async function confirmOrderFromPayment(
           ticketType: true,
         },
       },
+      tenant: { select: { subdomain: true } },
       voucherCode: true,
     },
   });
@@ -1208,6 +1303,7 @@ export async function confirmOrderFromPayment(
 
   revalidatePath('/account/orders');
   revalidatePath('/account/tickets');
+  revalidatePath(`/t/${order.tenant.subdomain}/checkout/success/${orderId}`);
 
   // Send confirmation email (fire-and-forget)
   sendConfirmationEmailForOrder(orderId);
@@ -1220,11 +1316,16 @@ export async function verifyAndConfirmPaymentAction(
   orderId: string
 ): Promise<{ data: { status: 'confirmed' | 'pending' | 'failed' } } | { error: string }> {
   try {
+    const parsed = cancelOrderSchema.safeParse({ orderId });
+    if (!parsed.success) {
+      return { error: parsed.error.issues[0]?.message || 'Invalid order ID' };
+    }
+
     const session = await requireAuth();
     const userId = session.user.id;
 
     const order = await prisma.order.findUnique({
-      where: { id: orderId },
+      where: { id: parsed.data.orderId },
     });
 
     if (!order) {
@@ -1281,12 +1382,17 @@ export async function cancelOrderAction(
   orderId: string
 ): Promise<{ success: true } | { error: string }> {
   try {
+    const parsed = cancelOrderSchema.safeParse({ orderId });
+    if (!parsed.success) {
+      return { error: parsed.error.issues[0]?.message || 'Invalid order ID' };
+    }
+
     const session = await requireAuth();
     const userId = session.user.id;
 
     // Find order and verify ownership
     const order = await prisma.order.findUnique({
-      where: { id: orderId },
+      where: { id: parsed.data.orderId },
       include: {
         items: true,
       },
@@ -1430,11 +1536,16 @@ export async function getOrderForCheckoutAction(
   orderId: string
 ): Promise<{ data: OrderWithRelations } | { error: string }> {
   try {
+    const parsed = cancelOrderSchema.safeParse({ orderId });
+    if (!parsed.success) {
+      return { error: parsed.error.issues[0]?.message || 'Invalid order ID' };
+    }
+
     const session = await requireAuth();
     const userId = session.user.id;
 
     const order = await prisma.order.findUnique({
-      where: { id: orderId },
+      where: { id: parsed.data.orderId },
       include: {
         event: true,
         tenant: true,

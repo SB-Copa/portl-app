@@ -2,6 +2,7 @@
 
 import { getCurrentTenant } from '@/lib/tenant';
 import { prisma } from '@/lib/prisma';
+import { cleanupExpiredOrdersForTenant } from '@/app/actions/checkout';
 
 /**
  * Get all published events for a tenant (public, no auth required)
@@ -52,6 +53,11 @@ export async function getPublicEventById(subdomain: string, eventId: string) {
     if (!tenant) {
       return { error: 'Tenant not found' };
     }
+
+    // Fire-and-forget: clean up expired orders to show accurate availability
+    cleanupExpiredOrdersForTenant(tenant.id).catch(err =>
+      console.error('Background cleanup failed:', err)
+    );
 
     const event = await prisma.event.findFirst({
       where: {
