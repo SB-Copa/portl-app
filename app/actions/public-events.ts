@@ -1,15 +1,14 @@
 'use server';
 
-import { getCurrentTenant } from '@/lib/tenant';
+import { getActiveTenantBySubdomain } from '@/lib/tenant';
 import { prisma } from '@/lib/prisma';
-import { cleanupExpiredOrdersForTenant } from '@/app/actions/checkout';
 
 /**
  * Get all published events for a tenant (public, no auth required)
  */
 export async function getPublicEventsForTenant(subdomain: string) {
   try {
-    const tenant = await getCurrentTenant(subdomain);
+    const tenant = await getActiveTenantBySubdomain(subdomain);
     if (!tenant) {
       return { error: 'Tenant not found' };
     }
@@ -49,15 +48,10 @@ export async function getPublicEventsForTenant(subdomain: string) {
  */
 export async function getPublicEventById(subdomain: string, eventId: string) {
   try {
-    const tenant = await getCurrentTenant(subdomain);
+    const tenant = await getActiveTenantBySubdomain(subdomain);
     if (!tenant) {
       return { error: 'Tenant not found' };
     }
-
-    // Fire-and-forget: clean up expired orders to show accurate availability
-    cleanupExpiredOrdersForTenant(tenant.id).catch(err =>
-      console.error('Background cleanup failed:', err)
-    );
 
     const event = await prisma.event.findFirst({
       where: {

@@ -63,7 +63,6 @@ export function TicketTypeForm({ tables, defaultValues, onSubmit, onCancel, isEd
   const availableTables = kind === 'TABLE' || kind === 'SEAT' ? tables : [];
 
   const onSubmitForm = async (data: TicketTypeFormData) => {
-    console.log('Form submitting with data:', data);
     setIsLoading(true);
     try {
       const imageUrl = await uploadPendingFile(imageFile, 'ticket-types');

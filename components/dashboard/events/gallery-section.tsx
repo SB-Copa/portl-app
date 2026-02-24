@@ -56,7 +56,7 @@ export function GallerySection({ event, tenantSubdomain }: GallerySectionProps) 
       }
 
       const result = await addEventImageAction(tenantSubdomain, event.id, url);
-      if (result.error) {
+      if ('error' in result) {
         toast.error(result.error);
       } else {
         toast.success('Image added to gallery');
@@ -78,7 +78,7 @@ export function GallerySection({ event, tenantSubdomain }: GallerySectionProps) 
     const result = await deleteEventImageAction(tenantSubdomain, imageId);
     setIsDeleting(null);
 
-    if (result.error) {
+    if ('error' in result) {
       toast.error(result.error);
     } else {
       toast.success('Image removed');
@@ -105,7 +105,7 @@ export function GallerySection({ event, tenantSubdomain }: GallerySectionProps) 
     );
     setIsReordering(false);
 
-    if (result.error) {
+    if ('error' in result) {
       toast.error(result.error);
     } else {
       router.refresh();
@@ -122,7 +122,7 @@ export function GallerySection({ event, tenantSubdomain }: GallerySectionProps) 
     );
     setIsSettingThumbnail(false);
 
-    if (result.error) {
+    if ('error' in result) {
       toast.error(result.error);
     } else {
       toast.success(isCurrent ? 'Thumbnail cleared (will use first gallery image)' : 'Thumbnail set');

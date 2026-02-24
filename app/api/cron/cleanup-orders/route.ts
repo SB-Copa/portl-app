@@ -1,4 +1,4 @@
-import { cleanupAllExpiredOrders } from '@/app/actions/checkout';
+import { cleanupAllExpiredOrders } from '@/lib/checkout-internal';
 
 export async function GET(request: Request) {
   const authHeader = request.headers.get('authorization');

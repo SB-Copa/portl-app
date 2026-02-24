@@ -7,7 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Loader2, Tag, X } from 'lucide-react';
-import { applyVoucherCodeAction, removeVoucherCodeAction, type OrderWithRelations } from '@/app/actions/checkout';
+import { applyVoucherCodeAction, removeVoucherCodeAction } from '@/app/actions/checkout';
+import type { CheckoutOrderWithRelations as OrderWithRelations } from '@/lib/types/order';
 import { formatPhp } from '@/lib/format';
 
 interface OrderReviewProps {

@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { AlertCircle, CreditCard, XCircle, Loader2 } from 'lucide-react';
-import { cancelOrderAction, type OrderWithRelations } from '@/app/actions/checkout';
+import { cancelOrderAction } from '@/app/actions/checkout';
+import type { CheckoutOrderWithRelations as OrderWithRelations } from '@/lib/types/order';
 import { formatPhp } from '@/lib/format';
 
 interface PaymentCancelledPromptProps {

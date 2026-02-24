@@ -5,7 +5,7 @@ import { Separator } from '@/components/ui/separator';
 import { CheckCircle, Calendar, MapPin, Ticket, ExternalLink } from 'lucide-react';
 import { TicketQRCode } from '@/components/ui/ticket-qr-code';
 import { mainUrl } from '@/lib/url';
-import type { OrderWithRelations } from '@/app/actions/checkout';
+import type { CheckoutOrderWithRelations as OrderWithRelations } from '@/lib/types/order';
 import { formatPhp } from '@/lib/format';
 
 interface CheckoutSuccessProps {
