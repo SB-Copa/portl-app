@@ -37,6 +37,9 @@ export async function proxy(request: NextRequest) {
     // Strip port for hostname comparison
     const rootHostname = rootDomain.split(':')[0]
     const currentHostname = host.split(':')[0]
+    // Treat both apex and www as main domain (www would otherwise be treated as tenant "www" → 404)
+    const isMainDomain =
+        currentHostname === rootHostname || currentHostname === `www.${rootHostname}`
 
     const stripPrefixFromPath = (path: string, prefix: string) => {
         if (path === prefix) return '/'
@@ -57,7 +60,7 @@ export async function proxy(request: NextRequest) {
     }
 
     // /admin route on main domain → redirect to admin subdomain
-    if (pathname.startsWith('/admin') && currentHostname === rootHostname) {
+    if (pathname.startsWith('/admin') && isMainDomain) {
         const adminUrl = new URL(request.url)
         adminUrl.host = `admin.${rootDomain}`
         adminUrl.pathname = pathname.replace(/^\/admin/, '') || '/'
@@ -65,9 +68,9 @@ export async function proxy(request: NextRequest) {
     }
 
     // --- Tenant subdomain ---
-    // Check if current host is a subdomain of root domain (not admin, not main)
+    // Check if current host is a subdomain of root domain (not admin, not main, not www)
     if (
-        currentHostname !== rootHostname &&
+        !isMainDomain &&
         currentHostname !== `admin.${rootHostname}` &&
         currentHostname.endsWith(`.${rootHostname}`)
     ) {
@@ -87,7 +90,7 @@ export async function proxy(request: NextRequest) {
     // --- Main domain only below ---
 
     // Redirect /t/[tenant]/* on main domain → tenant subdomain
-    if (pathname.startsWith('/t/') && currentHostname === rootHostname) {
+    if (pathname.startsWith('/t/') && isMainDomain) {
         const segments = pathname.split('/')
         // segments: ['', 't', 'tenant-slug', ...rest]
         const subdomain = segments[2]
@@ -101,7 +104,7 @@ export async function proxy(request: NextRequest) {
     }
 
     // Redirect authenticated users away from auth pages (main domain only)
-    if (pathname.startsWith('/auth/') && currentHostname === rootHostname) {
+    if (pathname.startsWith('/auth/') && isMainDomain) {
         try {
             const session = await auth()
             if (session?.user) {
