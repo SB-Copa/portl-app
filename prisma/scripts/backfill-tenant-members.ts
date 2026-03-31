@@ -4,6 +4,7 @@
  *
  * Run with: npx tsx prisma/scripts/backfill-tenant-members.ts
  */
+import 'dotenv/config';
 import { PrismaClient } from '@/prisma/generated/prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 
@@ -53,12 +54,16 @@ async function main() {
   console.log(`\nTenantMember backfill: ${created} created, ${skipped} skipped`);
 
   // 2. Update users with ORGANIZER role to USER
-  // Note: After removing ORGANIZER from the enum, this step handles
-  // any existing data. Run this BEFORE applying the enum removal migration.
-  const updated = await prisma.$executeRawUnsafe(
-    `UPDATE users SET role = 'USER' WHERE role = 'ORGANIZER'`
-  );
-  console.log(`Updated ${updated} users from ORGANIZER to USER`);
+  // Note: This only works BEFORE the enum removal migration.
+  // If the ORGANIZER enum value has already been removed, this step is skipped.
+  try {
+    const updated = await prisma.$executeRawUnsafe(
+      `UPDATE users SET role = 'USER' WHERE role = 'ORGANIZER'`
+    );
+    console.log(`Updated ${updated} users from ORGANIZER to USER`);
+  } catch {
+    console.log('Skipping ORGANIZER→USER migration (enum value already removed)');
+  }
 
   console.log('\nBackfill complete!');
 }
