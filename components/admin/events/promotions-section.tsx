@@ -6,10 +6,12 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { PromotionForm } from './promotion-form';
 import { VoucherCodesSection } from './voucher-codes-section';
 import { Plus, Trash2, Tag, Ticket } from 'lucide-react';
 import { Event, Prisma } from '@/prisma/generated/prisma/client';
+import type { PromotionFormData } from '@/lib/validations/events';
 import { createPromotionAction, deletePromotionAction } from '@/app/actions/events';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
@@ -44,8 +46,9 @@ export function PromotionsSection({ event }: PromotionsSectionProps) {
   const router = useRouter();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [voucherCodesDialogOpen, setVoucherCodesDialogOpen] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
-  const handleCreatePromotion = async (data: any) => {
+  const handleCreatePromotion = async (data: PromotionFormData) => {
     const result = await createPromotionAction(event.id, data);
     if (result.error) {
       toast.error(result.error);
@@ -57,10 +60,8 @@ export function PromotionsSection({ event }: PromotionsSectionProps) {
   };
 
   const handleDeletePromotion = async (promotionId: string) => {
-    if (!confirm('Are you sure you want to delete this promotion? This will also delete all voucher codes.')) {
-      return;
-    }
     const result = await deletePromotionAction(promotionId);
+    setDeleteTarget(null);
     if (result.error) {
       toast.error(result.error);
     } else {
@@ -190,7 +191,8 @@ export function PromotionsSection({ event }: PromotionsSectionProps) {
                         <Button
                           variant="destructive"
                           size="sm"
-                          onClick={() => handleDeletePromotion(promotion.id)}
+                          aria-label="Delete promotion"
+                          onClick={() => setDeleteTarget(promotion.id)}
                         >
                           <Trash2 className="h-3 w-3" />
                         </Button>
@@ -203,6 +205,16 @@ export function PromotionsSection({ event }: PromotionsSectionProps) {
           </CardContent>
         </Card>
       )}
+
+      <ConfirmationDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        title="Delete promotion"
+        description="Are you sure you want to delete this promotion? This will also delete all voucher codes."
+        confirmLabel="Delete"
+        variant="destructive"
+        onConfirm={() => deleteTarget && handleDeletePromotion(deleteTarget)}
+      />
 
       {voucherCodesDialogOpen && (
         <Dialog open={!!voucherCodesDialogOpen} onOpenChange={(open) => !open && setVoucherCodesDialogOpen(null)}>

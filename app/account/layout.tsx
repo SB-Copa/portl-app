@@ -1,4 +1,10 @@
+import type { Metadata } from 'next'
 import { getCurrentUser } from '@/lib/auth'
+
+export const metadata: Metadata = {
+  title: 'My Account | Portl',
+  description: 'Manage your Portl account',
+}
 import { redirect } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import AccountSidebar from '@/components/account/account-sidebar'

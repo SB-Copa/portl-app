@@ -91,6 +91,8 @@ export default function ForgotPasswordPage() {
                 id="email"
                 name="email"
                 type="email"
+                autoComplete="email"
+                spellCheck={false}
                 placeholder="you@example.com"
                 required
                 disabled={isLoading}
@@ -103,7 +105,7 @@ export default function ForgotPasswordPage() {
               className="w-full h-11 font-medium"
               disabled={isLoading}
             >
-              {isLoading ? 'Sending...' : 'Send reset link'}
+              {isLoading ? 'Sending\u2026' : 'Send reset link'}
             </Button>
           </form>
 

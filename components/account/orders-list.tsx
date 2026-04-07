@@ -82,11 +82,11 @@ export function OrdersList({ orders }: OrdersListProps) {
 
               <div className="flex items-center gap-4">
                 <div className="text-right">
-                  <p className="font-semibold">
+                  <p className="font-semibold tabular-nums">
                     PHP {order.total.toLocaleString()}
                   </p>
                 </div>
-                <Button variant="ghost" size="icon" asChild>
+                <Button variant="ghost" size="icon" asChild aria-label="View order details">
                   <Link href={`/account/orders/${order.id}`}>
                     <ChevronRight className="h-5 w-5" />
                   </Link>

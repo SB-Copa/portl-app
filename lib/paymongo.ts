@@ -62,6 +62,24 @@ export interface PaymentData {
   netAmount: number;
 }
 
+/** Raw payment resource from PayMongo API response */
+interface RawPayMongoPayment {
+  id: string;
+  attributes: {
+    amount: number;
+    status: string;
+    source: {
+      id: string;
+      type: string;
+      brand?: string;
+      last4?: string;
+    };
+    paid_at: number;
+    fee: number;
+    net_amount: number;
+  };
+}
+
 // ============================================================================
 // API FUNCTIONS
 // ============================================================================
@@ -148,8 +166,7 @@ export async function retrieveCheckoutSession(
   const attributes = data.data.attributes;
 
   const payments: PaymentData[] = (attributes.payments || []).map(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (payment: any) => ({
+    (payment: RawPayMongoPayment) => ({
       id: payment.id,
       amount: payment.attributes.amount,
       status: payment.attributes.status,

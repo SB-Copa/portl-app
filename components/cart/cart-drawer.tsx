@@ -20,7 +20,7 @@ export function CartDrawer() {
 
   return (
     <Sheet open={isOpen} onOpenChange={(open) => !open && closeCart()}>
-      <SheetContent className="w-full sm:max-w-md flex flex-col">
+      <SheetContent className="w-full sm:max-w-md flex flex-col [overscroll-behavior:contain]">
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
             <ShoppingCart className="h-5 w-5" />
@@ -33,9 +33,9 @@ export function CartDrawer() {
           </SheetTitle>
         </SheetHeader>
 
-        <Separator className="my-4" />
+        <Separator className="mx-4" />
 
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto min-h-0 px-4 pb-4">
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -47,26 +47,24 @@ export function CartDrawer() {
               {cartSummary.groupedByTenant.map((group) => (
                 <CartTenantGroup key={group.tenant.id} group={group} />
               ))}
+
+              <Separator />
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-base font-semibold">Total</span>
+                  <span className="text-base font-bold tabular-nums">
+                    PHP {cartSummary.totalAmount.toLocaleString()}
+                  </span>
+                </div>
+                {cartSummary.groupedByTenant.length > 1 && (
+                  <p className="text-xs text-muted-foreground">
+                    Checkout is per organizer. Select a section above to proceed.
+                  </p>
+                )}
+              </div>
             </div>
           )}
         </div>
-
-        {!isEmpty && !isLoading && (
-          <>
-            <Separator className="my-4" />
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-base font-semibold">Total</span>
-                <span className="text-base font-bold">
-                  PHP {cartSummary.totalAmount.toLocaleString()}
-                </span>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Checkout is per organizer. Select a section above to proceed.
-              </p>
-            </div>
-          </>
-        )}
       </SheetContent>
     </Sheet>
   );

@@ -76,7 +76,7 @@ export function OrderReview({ order, onContinue, onOrderUpdate }: OrderReviewPro
                     {item.quantity} x {formatPhp(item.unitPrice)}
                   </p>
                 </div>
-                <p className="font-medium">
+                <p className="font-medium tabular-nums">
                   {formatPhp(item.totalPrice)}
                 </p>
               </div>
@@ -100,6 +100,7 @@ export function OrderReview({ order, onContinue, onOrderUpdate }: OrderReviewPro
                   onClick={handleRemoveVoucher}
                   disabled={isPending}
                   className="h-8 w-8"
+                  aria-label="Remove voucher code"
                 >
                   {isPending ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -113,6 +114,8 @@ export function OrderReview({ order, onContinue, onOrderUpdate }: OrderReviewPro
                 <Input
                   id="voucher"
                   placeholder="Enter code"
+                  autoComplete="off"
+                  spellCheck={false}
                   value={voucherCode}
                   onChange={(e) => setVoucherCode(e.target.value.toUpperCase())}
                   disabled={isPending}
@@ -141,23 +144,23 @@ export function OrderReview({ order, onContinue, onOrderUpdate }: OrderReviewPro
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Subtotal</span>
-              <span>{formatPhp(order.subtotal)}</span>
+              <span className="tabular-nums">{formatPhp(order.subtotal)}</span>
             </div>
             {order.discountAmount > 0 && (
               <div className="flex justify-between text-sm text-green-600">
                 <span>Discount</span>
-                <span>-{formatPhp(order.discountAmount)}</span>
+                <span className="tabular-nums">-{formatPhp(order.discountAmount)}</span>
               </div>
             )}
             {order.serviceFee > 0 && (
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Service Fee</span>
-                <span>{formatPhp(order.serviceFee)}</span>
+                <span className="tabular-nums">{formatPhp(order.serviceFee)}</span>
               </div>
             )}
             <div className="flex justify-between font-semibold text-lg pt-2 border-t">
               <span>Total</span>
-              <span>{formatPhp(order.total)}</span>
+              <span className="tabular-nums">{formatPhp(order.total)}</span>
             </div>
           </div>
         </CardContent>

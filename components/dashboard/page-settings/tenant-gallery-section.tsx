@@ -12,6 +12,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { FileUpload } from '@/components/ui/file-upload';
+import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { Plus, ImageIcon, Trash2, ChevronUp, ChevronDown } from 'lucide-react';
 import type { TenantImage } from '@/prisma/generated/prisma/client';
 import {
@@ -39,6 +40,7 @@ export function TenantGallerySection({ tenant, tenantSubdomain }: TenantGalleryS
   const [pendingFile, setPendingFile] = useState<string | File | undefined>();
   const [isAdding, setIsAdding] = useState(false);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [isReordering, setIsReordering] = useState(false);
 
   const handleAddImage = useCallback(async () => {
@@ -69,11 +71,10 @@ export function TenantGallerySection({ tenant, tenantSubdomain }: TenantGalleryS
   }, [pendingFile, tenantSubdomain, tenant.id, router]);
 
   const handleDeleteImage = async (imageId: string) => {
-    if (!confirm('Are you sure you want to delete this image?')) return;
-
     setIsDeleting(imageId);
     const result = await deleteTenantImageAction(tenantSubdomain, imageId);
     setIsDeleting(null);
+    setDeleteTarget(null);
 
     if (result.error) {
       toast.error(result.error);
@@ -235,7 +236,7 @@ export function TenantGallerySection({ tenant, tenantSubdomain }: TenantGalleryS
                         variant="destructive"
                         size="icon"
                         className="h-8 w-8"
-                        onClick={() => handleDeleteImage(image.id)}
+                        onClick={() => setDeleteTarget(image.id)}
                         disabled={isDeleting === image.id}
                       >
                         <Trash2 className="h-4 w-4" />
@@ -248,6 +249,16 @@ export function TenantGallerySection({ tenant, tenantSubdomain }: TenantGalleryS
           </CardContent>
         </Card>
       )}
+      <ConfirmationDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        title="Delete image"
+        description="Are you sure you want to delete this image?"
+        confirmLabel="Delete"
+        variant="destructive"
+        loading={!!isDeleting}
+        onConfirm={() => deleteTarget && handleDeleteImage(deleteTarget)}
+      />
     </div>
   );
 }

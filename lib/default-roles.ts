@@ -1,5 +1,6 @@
 import { PERMISSIONS, ALL_PERMISSIONS } from './permissions';
 import type { Permission } from './permissions';
+import type { Prisma } from '@/prisma/generated/prisma/client';
 
 export interface DefaultRoleDefinition {
   name: string;
@@ -82,8 +83,7 @@ export const DEFAULT_ROLES: DefaultRoleDefinition[] = [
  * Returns the created roles, with the Owner role first.
  * Accepts either a Prisma transaction client or the full PrismaClient.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function seedDefaultRoles(tx: any, tenantId: string) {
+export async function seedDefaultRoles(tx: Prisma.TransactionClient, tenantId: string) {
   const createdRoles = [];
 
   for (const roleDef of DEFAULT_ROLES) {

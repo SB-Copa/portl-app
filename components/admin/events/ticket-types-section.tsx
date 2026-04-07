@@ -6,10 +6,12 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { TicketTypeForm } from './ticket-type-form';
 import { PriceTiersSection } from './price-tiers-section';
 import { Plus, DollarSign, Tag } from 'lucide-react';
 import { Event, Prisma } from '@/prisma/generated/prisma/client';
+import type { TicketTypeFormData } from '@/lib/validations/events';
 import { createTicketTypeAction, deleteTicketTypeAction } from '@/app/actions/events';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
@@ -51,8 +53,9 @@ export function TicketTypesSection({ event }: TicketTypesSectionProps) {
   const router = useRouter();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [priceTiersDialogOpen, setPriceTiersDialogOpen] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
-  const handleCreateTicketType = async (data: any) => {
+  const handleCreateTicketType = async (data: TicketTypeFormData) => {
     const result = await createTicketTypeAction(event.id, data);
     if (result.error) {
       toast.error(result.error);
@@ -64,10 +67,8 @@ export function TicketTypesSection({ event }: TicketTypesSectionProps) {
   };
 
   const handleDeleteTicketType = async (ticketTypeId: string) => {
-    if (!confirm('Are you sure you want to delete this ticket type? This will also delete all price tiers.')) {
-      return;
-    }
     const result = await deleteTicketTypeAction(ticketTypeId);
+    setDeleteTarget(null);
     if (result.error) {
       toast.error(result.error);
     } else {
@@ -188,7 +189,7 @@ export function TicketTypesSection({ event }: TicketTypesSectionProps) {
                         <Button
                           variant="destructive"
                           size="sm"
-                          onClick={() => handleDeleteTicketType(ticketType.id)}
+                          onClick={() => setDeleteTarget(ticketType.id)}
                         >
                           Delete
                         </Button>
@@ -201,6 +202,16 @@ export function TicketTypesSection({ event }: TicketTypesSectionProps) {
           </CardContent>
         </Card>
       )}
+
+      <ConfirmationDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        title="Delete ticket type"
+        description="Are you sure you want to delete this ticket type? This will also delete all price tiers."
+        confirmLabel="Delete"
+        variant="destructive"
+        onConfirm={() => deleteTarget && handleDeleteTicketType(deleteTarget)}
+      />
 
       {priceTiersDialogOpen && (
         <Dialog open={!!priceTiersDialogOpen} onOpenChange={(open) => !open && setPriceTiersDialogOpen(null)}>

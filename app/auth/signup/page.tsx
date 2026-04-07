@@ -89,6 +89,7 @@ export default function SignUpPage() {
                   id="firstName"
                   name="firstName"
                   type="text"
+                  autoComplete="given-name"
                   placeholder="John"
                   required
                   disabled={isLoading}
@@ -103,6 +104,7 @@ export default function SignUpPage() {
                   id="lastName"
                   name="lastName"
                   type="text"
+                  autoComplete="family-name"
                   placeholder="Doe"
                   required
                   disabled={isLoading}
@@ -119,6 +121,8 @@ export default function SignUpPage() {
                 id="email"
                 name="email"
                 type="email"
+                autoComplete="email"
+                spellCheck={false}
                 placeholder="you@example.com"
                 required
                 disabled={isLoading}
@@ -134,6 +138,7 @@ export default function SignUpPage() {
                 id="password"
                 name="password"
                 type="password"
+                autoComplete="new-password"
                 placeholder="••••••••"
                 required
                 disabled={isLoading}
@@ -153,6 +158,7 @@ export default function SignUpPage() {
                 id="confirmPassword"
                 name="confirmPassword"
                 type="password"
+                autoComplete="new-password"
                 placeholder="••••••••"
                 required
                 disabled={isLoading}
@@ -166,7 +172,7 @@ export default function SignUpPage() {
               className="w-full h-11 font-medium"
               disabled={isLoading}
             >
-              {isLoading ? 'Creating account...' : 'Create account'}
+              {isLoading ? 'Creating account\u2026' : 'Create account'}
             </Button>
           </form>
 

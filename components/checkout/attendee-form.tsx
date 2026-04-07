@@ -211,6 +211,7 @@ export function AttendeeForm({
                         <Label htmlFor={`firstName-${index}`}>First Name</Label>
                         <Input
                           id={`firstName-${index}`}
+                          autoComplete="given-name"
                           value={attendee.firstName}
                           onChange={(e) =>
                             handleFieldChange(index, 'firstName', e.target.value)
@@ -227,6 +228,7 @@ export function AttendeeForm({
                         <Label htmlFor={`lastName-${index}`}>Last Name</Label>
                         <Input
                           id={`lastName-${index}`}
+                          autoComplete="family-name"
                           value={attendee.lastName}
                           onChange={(e) =>
                             handleFieldChange(index, 'lastName', e.target.value)
@@ -246,6 +248,8 @@ export function AttendeeForm({
                       <Input
                         id={`email-${index}`}
                         type="email"
+                        autoComplete="email"
+                        spellCheck={false}
                         value={attendee.email}
                         onChange={(e) =>
                           handleFieldChange(index, 'email', e.target.value)
@@ -264,6 +268,7 @@ export function AttendeeForm({
                       <Input
                         id={`phone-${index}`}
                         type="tel"
+                        autoComplete="tel"
                         value={attendee.phone || ''}
                         onChange={(e) =>
                           handleFieldChange(index, 'phone', e.target.value)

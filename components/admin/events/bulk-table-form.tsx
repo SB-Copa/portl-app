@@ -18,7 +18,7 @@ import { useRouter } from 'next/navigation';
 
 interface BulkTableFormProps {
   eventId: string;
-  onSubmit: (data: BulkTableFormData) => Promise<{ error?: string; data?: any }>;
+  onSubmit: (data: BulkTableFormData) => Promise<{ error?: string; data?: unknown }>;
   onCancel: () => void;
 }
 

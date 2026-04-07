@@ -1,7 +1,6 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
 import { CartItem } from './cart-item';
 import { useCart } from './cart-provider';
 import { tenantUrl } from '@/lib/url';
@@ -42,8 +41,6 @@ export function CartTenantGroup({ group }: CartTenantGroupProps) {
           Checkout
         </a>
       </Button>
-
-      <Separator className="mt-4" />
     </div>
   );
 }

@@ -1,6 +1,12 @@
 export const dynamic = 'force-dynamic';
 
+import type { Metadata } from 'next'
 import type { ReactNode } from 'react'
+
+export const metadata: Metadata = {
+  title: 'Admin | Portl',
+  description: 'Portl admin dashboard',
+}
 import { getCurrentUser } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import { mainUrl } from '@/lib/url'

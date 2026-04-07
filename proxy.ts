@@ -15,9 +15,6 @@ import { auth } from '@/auth'
  * - Full Node.js APIs
  */
 
-// TODO: Remove this flag (and the coming-soon block below) when ready to launch
-const COMING_SOON = true
-
 export async function proxy(request: NextRequest) {
     const forwardedHost = request.headers.get('x-forwarded-host')?.split(',')[0]?.trim()
     const host = forwardedHost || request.headers.get('host') || ''

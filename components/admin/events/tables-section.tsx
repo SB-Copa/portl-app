@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { TableForm } from './table-form';
 import { BulkTableForm } from './bulk-table-form';
 import { SeatsList } from './seats-list';
@@ -39,6 +40,7 @@ export function TablesSection({ event }: TablesSectionProps) {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [bulkDialogOpen, setBulkDialogOpen] = useState(false);
   const [seatsDialogOpen, setSeatsDialogOpen] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   const handleCreateTable = async (data: any) => {
     const result = await createTableAction(event.id, data);
@@ -64,10 +66,8 @@ export function TablesSection({ event }: TablesSectionProps) {
   };
 
   const handleDeleteTable = async (tableId: string) => {
-    if (!confirm('Are you sure you want to delete this table? This will also delete all seats.')) {
-      return;
-    }
     const result = await deleteTableAction(tableId);
+    setDeleteTarget(null);
     if (result.error) {
       toast.error(result.error);
     } else {
@@ -207,7 +207,7 @@ export function TablesSection({ event }: TablesSectionProps) {
                         <Button
                           variant="destructive"
                           size="sm"
-                          onClick={() => handleDeleteTable(table.id)}
+                          onClick={() => setDeleteTarget(table.id)}
                         >
                           Delete
                         </Button>
@@ -220,6 +220,16 @@ export function TablesSection({ event }: TablesSectionProps) {
           </CardContent>
         </Card>
       )}
+
+      <ConfirmationDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        title="Delete table"
+        description="Are you sure you want to delete this table? This will also delete all seats."
+        confirmLabel="Delete"
+        variant="destructive"
+        onConfirm={() => deleteTarget && handleDeleteTable(deleteTarget)}
+      />
 
       {seatsDialogOpen && (
         <Dialog open={!!seatsDialogOpen} onOpenChange={(open) => !open && setSeatsDialogOpen(null)}>

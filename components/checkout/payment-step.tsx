@@ -103,6 +103,8 @@ export function PaymentStep({
               <Input
                 id="email"
                 type="email"
+                autoComplete="email"
+                spellCheck={false}
                 value={contactEmail}
                 onChange={(e) => setContactEmail(e.target.value)}
                 placeholder="your@email.com"
@@ -114,6 +116,7 @@ export function PaymentStep({
               <Input
                 id="phone"
                 type="tel"
+                autoComplete="tel"
                 value={contactPhone}
                 onChange={(e) => setContactPhone(e.target.value)}
                 placeholder="+63 912 345 6789"
@@ -133,19 +136,19 @@ export function PaymentStep({
               {order.items.map((item) => (
                 <div key={item.id} className="flex justify-between text-sm">
                   <span>{item.ticketType.name} x {item.quantity}</span>
-                  <span>{formatPhp(item.totalPrice)}</span>
+                  <span className="tabular-nums">{formatPhp(item.totalPrice)}</span>
                 </div>
               ))}
               {order.discountAmount > 0 && (
                 <div className="flex justify-between text-sm text-green-600">
                   <span>Discount</span>
-                  <span>-{formatPhp(order.discountAmount)}</span>
+                  <span className="tabular-nums">-{formatPhp(order.discountAmount)}</span>
                 </div>
               )}
               <Separator className="my-2" />
               <div className="flex justify-between font-semibold">
                 <span>Total</span>
-                <span>{formatPhp(order.total)}</span>
+                <span className="tabular-nums">{formatPhp(order.total)}</span>
               </div>
             </div>
           </div>
@@ -181,7 +184,7 @@ export function PaymentStep({
           {isPending ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              {isFreeOrder ? 'Confirming...' : 'Preparing Payment...'}
+              {isFreeOrder ? 'Confirming\u2026' : 'Preparing Payment\u2026'}
             </>
           ) : isFreeOrder ? (
             <>

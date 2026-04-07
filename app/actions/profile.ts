@@ -49,7 +49,7 @@ export async function updateProfileAction(formData: FormData) {
       },
     });
 
-    revalidatePath('/[tenant]/profile');
+    revalidatePath('/t/[tenant]/profile', 'page');
     revalidatePath('/account/settings');
     return { success: true };
   } catch (error) {

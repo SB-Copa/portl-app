@@ -77,7 +77,7 @@ export function PublicEventCard({ event, tenantSubdomain }: PublicEventCardProps
             <div className="flex items-center gap-2 text-sm font-medium">
               <Ticket className="h-4 w-4 shrink-0" />
               {startingPrice !== null ? (
-                <span>From PHP {startingPrice.toLocaleString()}</span>
+                <span className="tabular-nums">From PHP {startingPrice.toLocaleString()}</span>
               ) : (
                 <span className="text-muted-foreground">Tickets coming soon</span>
               )}

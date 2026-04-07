@@ -13,6 +13,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { PromoterForm } from './promoter-form';
 import { Plus, Trash2, Megaphone, Copy, Check } from 'lucide-react';
 import {
@@ -83,6 +84,7 @@ export function PromotersSection({
   const router = useRouter();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
   const statsMap = new Map(stats.map((s) => [s.promoterId, s]));
@@ -99,12 +101,10 @@ export function PromotersSection({
   };
 
   const handleDelete = async (promoterId: string) => {
-    if (!confirm('Are you sure you want to delete this promoter? Their promo code will also be deleted.')) {
-      return;
-    }
     setIsDeleting(promoterId);
     const result = await deleteEventPromoterAction(tenantSubdomain, promoterId);
     setIsDeleting(null);
+    setDeleteTarget(null);
     if ('error' in result) {
       toast.error(result.error);
     } else {
@@ -262,7 +262,7 @@ export function PromotersSection({
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleDelete(promoter.id)}
+                            onClick={() => setDeleteTarget(promoter.id)}
                             disabled={isDeleting === promoter.id}
                             className="text-destructive hover:text-destructive"
                           >
@@ -278,6 +278,17 @@ export function PromotersSection({
           </CardContent>
         </Card>
       )}
+
+      <ConfirmationDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        title="Delete promoter"
+        description="Are you sure you want to delete this promoter? Their promo code will also be deleted."
+        confirmLabel="Delete"
+        variant="destructive"
+        loading={!!isDeleting}
+        onConfirm={() => deleteTarget && handleDelete(deleteTarget)}
+      />
     </div>
   );
 }

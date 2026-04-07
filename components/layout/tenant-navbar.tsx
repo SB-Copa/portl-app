@@ -23,6 +23,8 @@ export async function TenantNavbar({
                         <img
                             src={tenantLogoUrl}
                             alt={tenantName || tenantSubdomain}
+                            width={120}
+                            height={32}
                             className="h-8 w-auto max-w-[120px] object-contain"
                         />
                     ) : (

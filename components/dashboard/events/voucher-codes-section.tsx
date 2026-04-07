@@ -12,6 +12,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { VoucherCodeForm } from './voucher-code-form';
 import { Plus, Trash2, Copy } from 'lucide-react';
 import { Promotion, Prisma } from '@/prisma/generated/prisma/client';
@@ -38,6 +39,7 @@ export function VoucherCodesSection({ promotion, tenantSubdomain }: VoucherCodes
   const router = useRouter();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   const handleCreateVoucherCode = async (data: VoucherCodeFormData) => {
     const result = await createVoucherCodeForTenantAction(tenantSubdomain, promotion.id, data);
@@ -51,12 +53,10 @@ export function VoucherCodesSection({ promotion, tenantSubdomain }: VoucherCodes
   };
 
   const handleDeleteVoucherCode = async (voucherCodeId: string) => {
-    if (!confirm('Are you sure you want to delete this voucher code?')) {
-      return;
-    }
     setIsDeleting(voucherCodeId);
     const result = await deleteVoucherCodeForTenantAction(tenantSubdomain, voucherCodeId);
     setIsDeleting(null);
+    setDeleteTarget(null);
     if ('error' in result) {
       toast.error(result.error);
     } else {
@@ -137,6 +137,7 @@ export function VoucherCodesSection({ promotion, tenantSubdomain }: VoucherCodes
                         size="sm"
                         className="h-6 w-6 p-0"
                         onClick={() => handleCopyCode(code.code)}
+                        aria-label="Copy code"
                       >
                         <Copy className="h-3 w-3" />
                       </Button>
@@ -157,9 +158,10 @@ export function VoucherCodesSection({ promotion, tenantSubdomain }: VoucherCodes
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => handleDeleteVoucherCode(code.id)}
+                      onClick={() => setDeleteTarget(code.id)}
                       disabled={isDeleting === code.id}
                       className="text-destructive hover:text-destructive"
+                      aria-label="Delete voucher code"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -170,6 +172,17 @@ export function VoucherCodesSection({ promotion, tenantSubdomain }: VoucherCodes
           </TableBody>
         </Table>
       )}
+
+      <ConfirmationDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        title="Delete voucher code"
+        description="Are you sure you want to delete this voucher code?"
+        confirmLabel="Delete"
+        variant="destructive"
+        loading={!!isDeleting}
+        onConfirm={() => deleteTarget && handleDeleteVoucherCode(deleteTarget)}
+      />
     </div>
   );
 }

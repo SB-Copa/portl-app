@@ -84,6 +84,7 @@ export default function ResetPasswordPage() {
                 id="password"
                 name="password"
                 type="password"
+                autoComplete="new-password"
                 placeholder="••••••••"
                 required
                 disabled={isLoading}
@@ -103,6 +104,7 @@ export default function ResetPasswordPage() {
                 id="confirmPassword"
                 name="confirmPassword"
                 type="password"
+                autoComplete="new-password"
                 placeholder="••••••••"
                 required
                 disabled={isLoading}
@@ -116,7 +118,7 @@ export default function ResetPasswordPage() {
               className="w-full h-11 font-medium"
               disabled={isLoading}
             >
-              {isLoading ? 'Resetting...' : 'Reset password'}
+              {isLoading ? 'Resetting\u2026' : 'Reset password'}
             </Button>
           </form>
 

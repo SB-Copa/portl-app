@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Plus, Trash2, Pencil, Users, Lock } from 'lucide-react';
+import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { deleteTenantRoleAction } from '@/app/actions/tenant-roles';
 import { RoleForm } from './role-form';
 import { toast } from 'sonner';
@@ -32,11 +33,11 @@ export function RolesList({ roles, subdomain, permissions }: RolesListProps) {
   const router = useRouter();
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingRole, setEditingRole] = useState<Role | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
 
-  const handleDelete = async (roleId: string, roleName: string) => {
-    if (!confirm(`Delete the "${roleName}" role? Members with this role will lose it.`)) return;
-
+  const handleDelete = async (roleId: string) => {
     const result = await deleteTenantRoleAction(subdomain, roleId);
+    setDeleteTarget(null);
     if (result.error) {
       toast.error(result.error);
     } else {
@@ -118,7 +119,7 @@ export function RolesList({ roles, subdomain, permissions }: RolesListProps) {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleDelete(role.id, role.name)}
+                        onClick={() => setDeleteTarget({ id: role.id, name: role.name })}
                         className="text-destructive hover:text-destructive"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -131,6 +132,16 @@ export function RolesList({ roles, subdomain, permissions }: RolesListProps) {
           </div>
         </CardContent>
       </Card>
+
+      <ConfirmationDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        title="Delete role"
+        description={deleteTarget ? `Delete the "${deleteTarget.name}" role? Members with this role will lose it.` : ''}
+        confirmLabel="Delete"
+        variant="destructive"
+        onConfirm={() => deleteTarget && handleDelete(deleteTarget.id)}
+      />
 
       {/* Create Role Dialog */}
       <RoleForm

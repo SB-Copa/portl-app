@@ -13,6 +13,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { PriceTierForm } from './price-tier-form';
 import { Plus, Trash2, Clock, Package } from 'lucide-react';
 import { TicketType, Prisma } from '@/prisma/generated/prisma/client';
@@ -45,6 +46,7 @@ export function PriceTiersSection({ ticketType, tenantSubdomain }: PriceTiersSec
   const router = useRouter();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   const handleCreatePriceTier = async (data: PriceTierFormData) => {
     const result = await createPriceTierForTenantAction(tenantSubdomain, ticketType.id, data);
@@ -58,12 +60,10 @@ export function PriceTiersSection({ ticketType, tenantSubdomain }: PriceTiersSec
   };
 
   const handleDeletePriceTier = async (priceTierId: string) => {
-    if (!confirm('Are you sure you want to delete this price tier?')) {
-      return;
-    }
     setIsDeleting(priceTierId);
     const result = await deletePriceTierForTenantAction(tenantSubdomain, priceTierId);
     setIsDeleting(null);
+    setDeleteTarget(null);
     if ('error' in result) {
       toast.error(result.error);
     } else {
@@ -190,9 +190,10 @@ export function PriceTiersSection({ ticketType, tenantSubdomain }: PriceTiersSec
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleDeletePriceTier(tier.id)}
+                        onClick={() => setDeleteTarget(tier.id)}
                         disabled={isDeleting === tier.id}
                         className="text-destructive hover:text-destructive"
+                        aria-label="Delete price tier"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -203,6 +204,17 @@ export function PriceTiersSection({ ticketType, tenantSubdomain }: PriceTiersSec
           </TableBody>
         </Table>
       )}
+
+      <ConfirmationDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        title="Delete price tier"
+        description="Are you sure you want to delete this price tier?"
+        confirmLabel="Delete"
+        variant="destructive"
+        loading={!!isDeleting}
+        onConfirm={() => deleteTarget && handleDeletePriceTier(deleteTarget)}
+      />
     </div>
   );
 }

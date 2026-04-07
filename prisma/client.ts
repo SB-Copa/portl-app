@@ -6,7 +6,10 @@ const adapter = new PrismaPg({
 });
 
 const prismaClientSingleton = () => {
-  return new PrismaClient({ adapter });
+  return new PrismaClient({
+    adapter,
+    ...(process.env.NODE_ENV === 'development' && { log: ['query'] }),
+  });
 }
 
 declare global {

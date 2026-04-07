@@ -35,7 +35,7 @@ export function ApplicationWizard({
   );
   const [application, setApplication] = useState(initialApplication);
 
-  const saveApplication = async (step: number, data: any, shouldExit = false) => {
+  const saveApplication = async (step: number, data: unknown, shouldExit = false) => {
     const result = await saveApplicationAction(tenantId, step, data, shouldExit);
 
     if (result.error || !result.data) {

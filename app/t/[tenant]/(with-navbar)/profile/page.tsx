@@ -8,7 +8,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { User, Shield, Key } from 'lucide-react'
-import Link from 'next/link'
 
 async function getUserDetails(userId: string) {
     return await prisma.user.findUnique({
@@ -96,11 +95,11 @@ export default async function ProfilePage({
                                 Apply to become an organizer and unlock the ability to create events,
                                 manage ticketing, and connect with attendees.
                             </p>
-                            <Link href={`/dashboard/${subdomain}`}>
+                            <a href={mainUrl(`/dashboard/${subdomain}`)}>
                                 <Button>
                                     Apply Now
                                 </Button>
-                            </Link>
+                            </a>
                         </CardContent>
                     </Card>
                 )}

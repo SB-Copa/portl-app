@@ -113,6 +113,7 @@ export function ProfileForm({ defaultValues }: ProfileFormProps) {
           </label>
           <Input
             id="firstName"
+            autoComplete="given-name"
             {...register('firstName')}
             disabled={isLoading}
             className={errors.firstName ? 'border-red-500' : ''}
@@ -128,6 +129,7 @@ export function ProfileForm({ defaultValues }: ProfileFormProps) {
           </label>
           <Input
             id="lastName"
+            autoComplete="family-name"
             {...register('lastName')}
             disabled={isLoading}
             className={errors.lastName ? 'border-red-500' : ''}
@@ -145,6 +147,8 @@ export function ProfileForm({ defaultValues }: ProfileFormProps) {
         <Input
           id="email"
           type="email"
+          autoComplete="email"
+          spellCheck={false}
           {...register('email')}
           disabled={isLoading}
           className={errors.email ? 'border-red-500' : ''}
@@ -156,7 +160,7 @@ export function ProfileForm({ defaultValues }: ProfileFormProps) {
 
       <div className="flex justify-end pt-2">
         <Button type="submit" disabled={isLoading || (!isDirty && !imageChanged)}>
-          {isLoading ? 'Saving...' : 'Save Changes'}
+          {isLoading ? 'Saving\u2026' : 'Save Changes'}
         </Button>
       </div>
     </form>

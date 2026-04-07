@@ -7,7 +7,6 @@
  */
 
 const KNOWN_ERROR_PATTERNS = [
-  'Unauthorized',
   'not found',
   'not belong',
   'not approved',
@@ -28,6 +27,11 @@ export function handleActionError(
   console.error(fallbackMessage + ':', error);
 
   if (error instanceof Error) {
+    // Auth errors get a user-friendly message
+    if (error.message === 'Unauthorized') {
+      return { error: 'Please sign in to continue' };
+    }
+
     if (customHandlers) {
       for (const [pattern, message] of Object.entries(customHandlers)) {
         if (error.message.includes(pattern)) return { error: message };

@@ -101,6 +101,7 @@ export function AddToCartButton({
           onClick={handleDecrement}
           disabled={quantity <= 1 || isPending}
           className="h-8 w-8"
+          aria-label="Decrease quantity"
         >
           <Minus className="h-4 w-4" />
         </Button>
@@ -112,6 +113,7 @@ export function AddToCartButton({
           max={maxQuantity}
           className="w-16 h-8 text-center"
           disabled={isPending}
+          aria-label={`Quantity for ${ticketTypeName}`}
         />
         <Button
           variant="outline"
@@ -119,10 +121,11 @@ export function AddToCartButton({
           onClick={handleIncrement}
           disabled={quantity >= maxQuantity || isPending}
           className="h-8 w-8"
+          aria-label="Increase quantity"
         >
           <Plus className="h-4 w-4" />
         </Button>
-        <Button onClick={handleAddToCart} disabled={isPending} className="ml-2">
+        <Button onClick={handleAddToCart} disabled={isPending} className="ml-2" aria-label={isPending ? 'Adding to cart' : 'Add to cart'}>
           {isPending ? (
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
@@ -134,7 +137,7 @@ export function AddToCartButton({
         <p className="text-xs text-destructive">{error}</p>
       )}
       <p className="text-xs text-muted-foreground">
-        PHP {(price * quantity).toLocaleString()} total
+        <span className="tabular-nums">PHP {(price * quantity).toLocaleString()}</span> total
       </p>
     </div>
   );

@@ -134,7 +134,7 @@ export function RegistrationForm() {
     if (result.error) {
       setMessage({ type: 'error', text: result.error });
     } else if (result.data) {
-      setMessage({ type: 'success', text: 'Registration successful! Redirecting...' });
+      setMessage({ type: 'success', text: 'Registration successful! Redirecting\u2026' });
       // Redirect to the tenant dashboard
       setTimeout(() => {
         router.push(`/dashboard/${result.data.subdomain}`);
@@ -176,6 +176,7 @@ export function RegistrationForm() {
             <Label htmlFor="name">Business / Brand Name</Label>
             <Input
               id="name"
+              autoComplete="organization"
               {...register('name')}
               disabled={isLoading}
               className={errors.name ? 'border-red-500' : ''}
@@ -191,13 +192,15 @@ export function RegistrationForm() {
             <div className="flex items-center gap-2">
               <Input
                 id="subdomain"
+                spellCheck={false}
+                autoComplete="off"
                 {...register('subdomain')}
                 disabled={isLoading}
                 className={errors.subdomain ? 'border-red-500' : ''}
                 placeholder="acme-events"
               />
               <span className="text-sm text-muted-foreground whitespace-nowrap">
-                .portl.com
+                .{process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'portl.com'}
               </span>
             </div>
             <p className="text-xs text-muted-foreground">
@@ -213,6 +216,8 @@ export function RegistrationForm() {
             <Input
               id="businessEmail"
               type="email"
+              autoComplete="email"
+              spellCheck={false}
               {...register('businessEmail')}
               disabled={isLoading}
               className={errors.businessEmail ? 'border-red-500' : ''}
@@ -228,6 +233,7 @@ export function RegistrationForm() {
             <Input
               id="businessPhone"
               type="tel"
+              autoComplete="tel"
               {...register('businessPhone')}
               disabled={isLoading}
               className={errors.businessPhone ? 'border-red-500' : ''}
@@ -264,6 +270,8 @@ export function RegistrationForm() {
                   <Input
                     id="contactEmail"
                     type="email"
+                    autoComplete="email"
+                    spellCheck={false}
                     {...register('contactEmail')}
                     disabled={isLoading}
                     className={errors.contactEmail ? 'border-red-500' : ''}
@@ -279,6 +287,7 @@ export function RegistrationForm() {
                   <Input
                     id="contactPhone"
                     type="tel"
+                    autoComplete="tel"
                     {...register('contactPhone')}
                     disabled={isLoading}
                     className={errors.contactPhone ? 'border-red-500' : ''}
@@ -294,7 +303,7 @@ export function RegistrationForm() {
 
           <div className="flex justify-end pt-2">
             <Button type="submit" disabled={isLoading}>
-              {isLoading ? 'Registering...' : 'Register Business'}
+              {isLoading ? 'Registering\u2026' : 'Register Business'}
             </Button>
           </div>
         </form>

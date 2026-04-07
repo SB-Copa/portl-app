@@ -95,7 +95,7 @@ export function TicketsList({ tickets }: TicketsListProps) {
                         </code>
                       </div>
                     </div>
-                    <Button variant="ghost" size="icon" asChild>
+                    <Button variant="ghost" size="icon" asChild aria-label="View ticket details">
                       <Link href={`/account/tickets/${ticket.id}`}>
                         <ChevronRight className="h-5 w-5" />
                       </Link>

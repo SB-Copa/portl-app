@@ -21,15 +21,16 @@ export default async function EventOrdersPage({
     redirect(`/auth/signin?callbackUrl=/dashboard/${subdomain}/events/${eventId}/orders`);
   }
 
-  const eventResult = await getEventByIdForTenantAction(subdomain, eventId);
+  const [eventResult, ordersResult] = await Promise.all([
+    getEventByIdForTenantAction(subdomain, eventId),
+    getOrdersForEventAction(subdomain, eventId),
+  ]);
 
   if ('error' in eventResult) {
     notFound();
   }
 
   const event = eventResult.data;
-
-  const ordersResult = await getOrdersForEventAction(subdomain, eventId);
 
   const [orderCount, attendeeCount] = await Promise.all([
     prisma.order.count({

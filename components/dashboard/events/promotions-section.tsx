@@ -13,6 +13,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { PromotionForm } from './promotion-form';
 import { VoucherCodesSection } from './voucher-codes-section';
 import { Plus, Trash2, Tag, Percent, DollarSign } from 'lucide-react';
@@ -57,6 +58,7 @@ export function PromotionsSection({ event, tenantSubdomain }: PromotionsSectionP
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [voucherCodesDialogOpen, setVoucherCodesDialogOpen] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   const handleCreatePromotion = async (data: PromotionFormData) => {
     const result = await createPromotionForTenantAction(tenantSubdomain, event.id, data);
@@ -70,12 +72,10 @@ export function PromotionsSection({ event, tenantSubdomain }: PromotionsSectionP
   };
 
   const handleDeletePromotion = async (promotionId: string) => {
-    if (!confirm('Are you sure you want to delete this promotion? This will also delete all voucher codes.')) {
-      return;
-    }
     setIsDeleting(promotionId);
     const result = await deletePromotionForTenantAction(tenantSubdomain, promotionId);
     setIsDeleting(null);
+    setDeleteTarget(null);
     if ('error' in result) {
       toast.error(result.error);
     } else {
@@ -238,7 +238,7 @@ export function PromotionsSection({ event, tenantSubdomain }: PromotionsSectionP
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleDeletePromotion(promotion.id)}
+                            onClick={() => setDeleteTarget(promotion.id)}
                             disabled={isDeleting === promotion.id}
                             className="text-destructive hover:text-destructive"
                           >
@@ -254,6 +254,17 @@ export function PromotionsSection({ event, tenantSubdomain }: PromotionsSectionP
           </CardContent>
         </Card>
       )}
+
+      <ConfirmationDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        title="Delete promotion"
+        description="Are you sure you want to delete this promotion? This will also delete all voucher codes."
+        confirmLabel="Delete"
+        variant="destructive"
+        loading={!!isDeleting}
+        onConfirm={() => deleteTarget && handleDeletePromotion(deleteTarget)}
+      />
 
       {/* Voucher Codes Dialog */}
       {voucherCodesDialogOpen && (

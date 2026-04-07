@@ -10,6 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { Edit, MoreVertical, Globe, Archive, Eye } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -32,6 +33,7 @@ const statusConfig = {
 export function EventHeader({ event, tenantSubdomain }: EventHeaderProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
 
   const statusInfo = statusConfig[event.status];
 
@@ -49,13 +51,10 @@ export function EventHeader({ event, tenantSubdomain }: EventHeaderProps) {
   };
 
   const handleArchive = async () => {
-    if (!confirm('Are you sure you want to archive this event? It will be hidden from the public.')) {
-      return;
-    }
-
     setIsLoading(true);
     const result = await archiveEventForTenantAction(tenantSubdomain, event.id);
     setIsLoading(false);
+    setShowArchiveConfirm(false);
 
     if ('error' in result) {
       toast.error(result.error);
@@ -129,7 +128,7 @@ export function EventHeader({ event, tenantSubdomain }: EventHeaderProps) {
             <DropdownMenuSeparator />
             {event.status !== 'ARCHIVED' && (
               <DropdownMenuItem
-                onClick={handleArchive}
+                onClick={() => setShowArchiveConfirm(true)}
                 className="text-destructive focus:text-destructive"
               >
                 <Archive className="mr-2 h-4 w-4" />
@@ -139,6 +138,17 @@ export function EventHeader({ event, tenantSubdomain }: EventHeaderProps) {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+
+      <ConfirmationDialog
+        open={showArchiveConfirm}
+        onOpenChange={setShowArchiveConfirm}
+        title="Archive event"
+        description="Are you sure you want to archive this event? It will be hidden from the public."
+        confirmLabel="Archive"
+        variant="destructive"
+        loading={isLoading}
+        onConfirm={handleArchive}
+      />
     </div>
   );
 }

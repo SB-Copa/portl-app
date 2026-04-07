@@ -2,7 +2,7 @@
 
 import { requireAuth, getCurrentUser } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { revalidatePath } from 'next/cache';
+import { handleActionError } from '@/lib/action-utils';
 import type { AddToCartData, UpdateCartItemData } from '@/lib/validations/checkout';
 import type { Cart, CartItem, Event, TicketType, TicketTypePriceTier, Tenant } from '@/prisma/generated/prisma/client';
 
@@ -174,11 +174,7 @@ export async function getOrCreateCartAction(): Promise<{ data: CartWithItems } |
 
     return { data: cart as CartWithItems };
   } catch (error) {
-    console.error('Error getting/creating cart:', error);
-    if (error instanceof Error && error.message === 'Unauthorized') {
-      return { error: 'Please sign in to add items to cart' };
-    }
-    return { error: 'Failed to get cart' };
+    return handleActionError(error, 'Failed to get cart');
   }
 }
 
@@ -337,11 +333,7 @@ export async function addToCartAction(
 
     return { data: updatedCart as CartWithItems };
   } catch (error) {
-    console.error('Error adding to cart:', error);
-    if (error instanceof Error && error.message === 'Unauthorized') {
-      return { error: 'Please sign in to add items to cart' };
-    }
-    return { error: 'Failed to add item to cart' };
+    return handleActionError(error, 'Failed to add item to cart');
   }
 }
 
@@ -422,11 +414,7 @@ export async function updateCartItemAction(
 
     return { data: updatedCart as CartWithItems };
   } catch (error) {
-    console.error('Error updating cart item:', error);
-    if (error instanceof Error && error.message === 'Unauthorized') {
-      return { error: 'Please sign in to update cart' };
-    }
-    return { error: 'Failed to update cart item' };
+    return handleActionError(error, 'Failed to update cart item');
   }
 }
 
@@ -486,11 +474,7 @@ export async function removeFromCartAction(
 
     return { data: updatedCart as CartWithItems };
   } catch (error) {
-    console.error('Error removing from cart:', error);
-    if (error instanceof Error && error.message === 'Unauthorized') {
-      return { error: 'Please sign in to update cart' };
-    }
-    return { error: 'Failed to remove item from cart' };
+    return handleActionError(error, 'Failed to remove item from cart');
   }
 }
 
@@ -515,11 +499,7 @@ export async function clearCartAction(): Promise<{ success: true } | { error: st
 
     return { success: true };
   } catch (error) {
-    console.error('Error clearing cart:', error);
-    if (error instanceof Error && error.message === 'Unauthorized') {
-      return { error: 'Please sign in to clear cart' };
-    }
-    return { error: 'Failed to clear cart' };
+    return handleActionError(error, 'Failed to clear cart');
   }
 }
 
@@ -580,11 +560,7 @@ export async function clearTenantItemsAction(
 
     return { data: updatedCart as CartWithItems };
   } catch (error) {
-    console.error('Error clearing tenant items:', error);
-    if (error instanceof Error && error.message === 'Unauthorized') {
-      return { error: 'Please sign in to update cart' };
-    }
-    return { error: 'Failed to clear tenant items' };
+    return handleActionError(error, 'Failed to clear tenant items');
   }
 }
 
@@ -685,8 +661,7 @@ export async function getCartSummaryAction(): Promise<{ data: CartSummary } | { 
       },
     };
   } catch (error) {
-    console.error('Error getting cart summary:', error);
-    return { error: 'Failed to get cart summary' };
+    return handleActionError(error, 'Failed to get cart summary');
   }
 }
 
@@ -753,11 +728,7 @@ export async function getCartForTenantAction(
       },
     };
   } catch (error) {
-    console.error('Error getting cart for tenant:', error);
-    if (error instanceof Error && error.message === 'Unauthorized') {
-      return { error: 'Please sign in to view cart' };
-    }
-    return { error: 'Failed to get cart' };
+    return handleActionError(error, 'Failed to get cart');
   }
 }
 

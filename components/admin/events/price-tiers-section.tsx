@@ -6,9 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { PriceTierForm } from './price-tier-form';
 import { Plus, Trash2, Clock, Package } from 'lucide-react';
 import { TicketType, Prisma } from '@/prisma/generated/prisma/client';
+import type { PriceTierFormData } from '@/lib/validations/events';
 import { createPriceTierAction, deletePriceTierAction } from '@/app/actions/events';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
@@ -31,8 +33,9 @@ const strategyLabels = {
 export function PriceTiersSection({ ticketType }: PriceTiersSectionProps) {
   const router = useRouter();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
-  const handleCreatePriceTier = async (data: any) => {
+  const handleCreatePriceTier = async (data: PriceTierFormData) => {
     const result = await createPriceTierAction(ticketType.id, data);
     if (result.error) {
       toast.error(result.error);
@@ -44,10 +47,8 @@ export function PriceTiersSection({ ticketType }: PriceTiersSectionProps) {
   };
 
   const handleDeletePriceTier = async (priceTierId: string) => {
-    if (!confirm('Are you sure you want to delete this price tier?')) {
-      return;
-    }
     const result = await deletePriceTierAction(priceTierId);
+    setDeleteTarget(null);
     if (result.error) {
       toast.error(result.error);
     } else {
@@ -184,7 +185,8 @@ export function PriceTiersSection({ ticketType }: PriceTiersSectionProps) {
                           <Button
                             variant="destructive"
                             size="sm"
-                            onClick={() => handleDeletePriceTier(tier.id)}
+                            aria-label="Delete price tier"
+                            onClick={() => setDeleteTarget(tier.id)}
                           >
                             <Trash2 className="h-3 w-3" />
                           </Button>
@@ -197,6 +199,16 @@ export function PriceTiersSection({ ticketType }: PriceTiersSectionProps) {
           </CardContent>
         </Card>
       )}
+
+      <ConfirmationDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        title="Delete price tier"
+        description="Are you sure you want to delete this price tier?"
+        confirmLabel="Delete"
+        variant="destructive"
+        onConfirm={() => deleteTarget && handleDeletePriceTier(deleteTarget)}
+      />
     </div>
   );
 }

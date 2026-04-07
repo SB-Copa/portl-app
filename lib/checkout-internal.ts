@@ -159,26 +159,37 @@ export async function cancelExpiredOrder(orderId: string): Promise<void> {
 }
 
 /**
- * Find and cancel all expired PENDING orders for a user+tenant to release inventory.
+ * Shared helper: find and cancel expired PENDING orders matching the given filter.
+ * Returns the number of successfully cancelled orders.
  */
-export async function cleanupExpiredOrders(userId: string, tenantId: string): Promise<void> {
+async function cancelExpiredOrders(where: Prisma.OrderWhereInput): Promise<number> {
   const expiredOrders = await prisma.order.findMany({
     where: {
-      userId,
-      tenantId,
+      ...where,
       status: 'PENDING',
       expiresAt: { lt: new Date() },
     },
     select: { id: true },
   });
 
+  let cancelled = 0;
   for (const order of expiredOrders) {
     try {
       await cancelExpiredOrder(order.id);
+      cancelled++;
     } catch (error) {
       console.error(`Failed to cancel expired order ${order.id}:`, error);
     }
   }
+
+  return cancelled;
+}
+
+/**
+ * Find and cancel all expired PENDING orders for a user+tenant to release inventory.
+ */
+export async function cleanupExpiredOrders(userId: string, tenantId: string): Promise<number> {
+  return cancelExpiredOrders({ userId, tenantId });
 }
 
 /**
@@ -186,25 +197,7 @@ export async function cleanupExpiredOrders(userId: string, tenantId: string): Pr
  * Used by the cron job to release abandoned inventory.
  */
 export async function cleanupAllExpiredOrders(): Promise<number> {
-  const expiredOrders = await prisma.order.findMany({
-    where: {
-      status: 'PENDING',
-      expiresAt: { lt: new Date() },
-    },
-    select: { id: true },
-  });
-
-  let cancelled = 0;
-  for (const order of expiredOrders) {
-    try {
-      await cancelExpiredOrder(order.id);
-      cancelled++;
-    } catch (error) {
-      console.error(`Failed to cancel expired order ${order.id}:`, error);
-    }
-  }
-
-  return cancelled;
+  return cancelExpiredOrders({});
 }
 
 /**
@@ -212,26 +205,7 @@ export async function cleanupAllExpiredOrders(): Promise<number> {
  * Used for opportunistic cleanup on public pages.
  */
 export async function cleanupExpiredOrdersForTenant(tenantId: string): Promise<number> {
-  const expiredOrders = await prisma.order.findMany({
-    where: {
-      tenantId,
-      status: 'PENDING',
-      expiresAt: { lt: new Date() },
-    },
-    select: { id: true },
-  });
-
-  let cancelled = 0;
-  for (const order of expiredOrders) {
-    try {
-      await cancelExpiredOrder(order.id);
-      cancelled++;
-    } catch (error) {
-      console.error(`Failed to cancel expired order ${order.id}:`, error);
-    }
-  }
-
-  return cancelled;
+  return cancelExpiredOrders({ tenantId });
 }
 
 /**

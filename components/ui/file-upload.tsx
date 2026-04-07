@@ -140,6 +140,7 @@ export function FileUpload({
                 type="button"
                 variant="destructive"
                 size="sm"
+                aria-label="Remove file"
                 onClick={handleRemove}
               >
                 <X className="h-4 w-4" />

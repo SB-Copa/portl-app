@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect, useMemo, type ReactNode } from 'react';
 import { getCartSummaryAction, type CartSummary } from '@/app/actions/cart';
 
 interface CartContextValue {
@@ -53,18 +53,18 @@ export function CartProvider({ children }: { children: ReactNode }) {
     refreshCart();
   }, [refreshCart]);
 
+  const value = useMemo<CartContextValue>(() => ({
+    cartSummary,
+    isLoading,
+    isOpen,
+    openCart,
+    closeCart,
+    toggleCart,
+    refreshCart,
+  }), [cartSummary, isLoading, isOpen, openCart, closeCart, toggleCart, refreshCart]);
+
   return (
-    <CartContext.Provider
-      value={{
-        cartSummary,
-        isLoading,
-        isOpen,
-        openCart,
-        closeCart,
-        toggleCart,
-        refreshCart,
-      }}
-    >
+    <CartContext.Provider value={value}>
       {children}
     </CartContext.Provider>
   );

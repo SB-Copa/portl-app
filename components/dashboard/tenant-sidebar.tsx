@@ -65,7 +65,7 @@ export default function TenantSidebar({
           {tenantSubdomain}
         </p>
         <p className="text-xs text-muted-foreground">
-          {tenantSubdomain}.localhost
+          {tenantSubdomain}.{process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'localhost'}
         </p>
       </div>
 

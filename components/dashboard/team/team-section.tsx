@@ -15,6 +15,7 @@ import {
 import { MoreHorizontal, UserPlus, Mail, Trash2, Clock } from 'lucide-react';
 import { removeTeamMemberAction, revokeInvitationAction } from '@/app/actions/tenant-members';
 import { assignRoleToMemberAction, removeRoleFromMemberAction } from '@/app/actions/tenant-roles';
+import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { InviteMemberForm } from './invite-member-form';
 import { EditMemberForm } from './edit-member-form';
 import { toast } from 'sonner';
@@ -76,6 +77,7 @@ export function TeamSection({ members, invitations, permissions, subdomain, tena
   const router = useRouter();
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   const [editingMember, setEditingMember] = useState<Member | null>(null);
+  const [removeTarget, setRemoveTarget] = useState<{ id: string; name: string } | null>(null);
 
   const canManageTeam = permissions.includes('manage_team');
   const isOwner = members.some((m) =>
@@ -83,10 +85,9 @@ export function TeamSection({ members, invitations, permissions, subdomain, tena
     m.user.id === editingMember?.user.id
   );
 
-  const handleRemoveMember = async (memberId: string, memberName: string) => {
-    if (!confirm(`Remove ${memberName} from the team?`)) return;
-
+  const handleRemoveMember = async (memberId: string) => {
     const result = await removeTeamMemberAction(subdomain, memberId);
+    setRemoveTarget(null);
     if (result.error) {
       toast.error(result.error);
     } else {
@@ -231,7 +232,7 @@ export function TeamSection({ members, invitations, permissions, subdomain, tena
                           )}
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
-                            onClick={() => handleRemoveMember(member.id, name)}
+                            onClick={() => setRemoveTarget({ id: member.id, name })}
                             className="text-destructive"
                           >
                             <Trash2 className="mr-2 h-4 w-4" />
@@ -318,6 +319,16 @@ export function TeamSection({ members, invitations, permissions, subdomain, tena
           tenantRoles={tenantRoles}
         />
       )}
+
+      <ConfirmationDialog
+        open={!!removeTarget}
+        onOpenChange={(open) => !open && setRemoveTarget(null)}
+        title="Remove team member"
+        description={removeTarget ? `Remove ${removeTarget.name} from the team?` : ''}
+        confirmLabel="Remove"
+        variant="destructive"
+        onConfirm={() => removeTarget && handleRemoveMember(removeTarget.id)}
+      />
 
       {/* Edit Dialog */}
       {editingMember && (

@@ -96,6 +96,8 @@ export default function SignInPage() {
                 id="email"
                 name="email"
                 type="email"
+                autoComplete="email"
+                spellCheck={false}
                 placeholder="you@example.com"
                 required
                 disabled={isLoading}
@@ -119,6 +121,7 @@ export default function SignInPage() {
                 id="password"
                 name="password"
                 type="password"
+                autoComplete="current-password"
                 placeholder="••••••••"
                 required
                 disabled={isLoading}
@@ -131,7 +134,7 @@ export default function SignInPage() {
               className="w-full h-11 font-medium"
               disabled={isLoading}
             >
-              {isLoading ? 'Signing in...' : 'Sign in'}
+              {isLoading ? 'Signing in\u2026' : 'Sign in'}
             </Button>
           </form>
 

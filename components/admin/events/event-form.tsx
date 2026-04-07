@@ -22,7 +22,7 @@ import { toast } from 'sonner';
 interface EventFormProps {
   defaultValues?: Partial<EventFormData>;
   eventId?: string;
-  onSubmit: (data: EventFormData) => Promise<{ error?: string; data?: any }>;
+  onSubmit: (data: EventFormData) => Promise<{ error?: string; data?: { id: string } }>;
 }
 
 export function EventForm({ defaultValues, eventId, onSubmit }: EventFormProps) {

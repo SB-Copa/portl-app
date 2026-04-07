@@ -85,6 +85,7 @@ export function PasswordForm() {
         <Input
           id="currentPassword"
           type="password"
+          autoComplete="current-password"
           {...register('currentPassword')}
           disabled={isLoading}
           className={errors.currentPassword ? 'border-red-500' : ''}
@@ -101,6 +102,7 @@ export function PasswordForm() {
         <Input
           id="newPassword"
           type="password"
+          autoComplete="new-password"
           {...register('newPassword')}
           disabled={isLoading}
           className={errors.newPassword ? 'border-red-500' : ''}
@@ -118,6 +120,7 @@ export function PasswordForm() {
         <Input
           id="confirmPassword"
           type="password"
+          autoComplete="new-password"
           {...register('confirmPassword')}
           disabled={isLoading}
           className={errors.confirmPassword ? 'border-red-500' : ''}
@@ -129,7 +132,7 @@ export function PasswordForm() {
 
       <div className="flex justify-end pt-2">
         <Button type="submit" disabled={isLoading}>
-          {isLoading ? 'Updating...' : 'Update Password'}
+          {isLoading ? 'Updating\u2026' : 'Update Password'}
         </Button>
       </div>
     </form>

@@ -22,6 +22,7 @@ import {
   confirmOrderFromPayment,
 } from '@/lib/checkout-internal';
 import type { CheckoutOrderWithRelations } from '@/lib/types/order';
+import { handleActionError } from '@/lib/action-utils';
 
 type OrderWithRelations = CheckoutOrderWithRelations;
 
@@ -278,11 +279,7 @@ export async function initializeCheckoutAction(
       },
     };
   } catch (error) {
-    console.error('Error initializing checkout:', error);
-    if (error instanceof Error && error.message === 'Unauthorized') {
-      return { error: 'Please sign in to checkout' };
-    }
-    return { error: 'Failed to initialize checkout' };
+    return handleActionError(error, 'Failed to initialize checkout');
   }
 }
 
@@ -418,11 +415,7 @@ export async function applyVoucherCodeAction(
 
     return { data: updatedOrder as OrderWithRelations };
   } catch (error) {
-    console.error('Error applying voucher code:', error);
-    if (error instanceof Error && error.message === 'Unauthorized') {
-      return { error: 'Please sign in to apply voucher' };
-    }
-    return { error: 'Failed to apply voucher code' };
+    return handleActionError(error, 'Failed to apply voucher code');
   }
 }
 
@@ -472,11 +465,7 @@ export async function removeVoucherCodeAction(
 
     return { data: updatedOrder as OrderWithRelations };
   } catch (error) {
-    console.error('Error removing voucher code:', error);
-    if (error instanceof Error && error.message === 'Unauthorized') {
-      return { error: 'Please sign in to modify order' };
-    }
-    return { error: 'Failed to remove voucher code' };
+    return handleActionError(error, 'Failed to remove voucher code');
   }
 }
 
@@ -539,11 +528,7 @@ export async function saveAttendeesAction(
 
     return { data: updatedOrder as OrderWithRelations };
   } catch (error) {
-    console.error('Error saving attendees:', error);
-    if (error instanceof Error && error.message === 'Unauthorized') {
-      return { error: 'Please sign in to save attendees' };
-    }
-    return { error: 'Failed to save attendee information' };
+    return handleActionError(error, 'Failed to save attendee information');
   }
 }
 
@@ -654,11 +639,7 @@ export async function completeCheckoutAction(
       },
     };
   } catch (error) {
-    console.error('Error completing checkout:', error);
-    if (error instanceof Error && error.message === 'Unauthorized') {
-      return { error: 'Please sign in to complete checkout' };
-    }
-    return { error: 'Failed to complete checkout' };
+    return handleActionError(error, 'Failed to complete checkout');
   }
 }
 
@@ -748,11 +729,7 @@ export async function confirmFreeOrderAction(
 
     return { data: { orderId } };
   } catch (error) {
-    console.error('Error confirming free order:', error);
-    if (error instanceof Error && error.message === 'Unauthorized') {
-      return { error: 'Please sign in to complete checkout' };
-    }
-    return { error: 'Failed to confirm order' };
+    return handleActionError(error, 'Failed to confirm order');
   }
 }
 
@@ -886,11 +863,7 @@ export async function createPaymentSessionAction(
 
     return { data: { checkoutUrl: checkoutResult.checkoutUrl } };
   } catch (error) {
-    console.error('Error creating payment session:', error);
-    if (error instanceof Error && error.message === 'Unauthorized') {
-      return { error: 'Please sign in to complete payment' };
-    }
-    return { error: 'Failed to create payment session. Please try again.' };
+    return handleActionError(error, 'Failed to create payment session. Please try again.');
   }
 }
 
@@ -952,11 +925,7 @@ export async function verifyAndConfirmPaymentAction(
     // Payment not yet completed
     return { data: { status: 'pending' } };
   } catch (error) {
-    console.error('Error verifying payment:', error);
-    if (error instanceof Error && error.message === 'Unauthorized') {
-      return { error: 'Please sign in to verify payment' };
-    }
-    return { error: 'Failed to verify payment status' };
+    return handleActionError(error, 'Failed to verify payment status');
   }
 }
 
@@ -1037,11 +1006,7 @@ export async function cancelOrderAction(
 
     return { success: true };
   } catch (error) {
-    console.error('Error cancelling order:', error);
-    if (error instanceof Error && error.message === 'Unauthorized') {
-      return { error: 'Please sign in to cancel order' };
-    }
-    return { error: 'Failed to cancel order' };
+    return handleActionError(error, 'Failed to cancel order');
   }
 }
 
@@ -1086,11 +1051,7 @@ export async function getPendingOrderForTenantAction(
 
     return { data: order as OrderWithRelations | null };
   } catch (error) {
-    console.error('Error getting pending order:', error);
-    if (error instanceof Error && error.message === 'Unauthorized') {
-      return { error: 'Please sign in to view order' };
-    }
-    return { error: 'Failed to get pending order' };
+    return handleActionError(error, 'Failed to get pending order');
   }
 }
 
@@ -1124,10 +1085,6 @@ export async function getOrderForCheckoutAction(
 
     return { data: order as OrderWithRelations };
   } catch (error) {
-    console.error('Error getting order for checkout:', error);
-    if (error instanceof Error && error.message === 'Unauthorized') {
-      return { error: 'Please sign in to view order' };
-    }
-    return { error: 'Failed to get order' };
+    return handleActionError(error, 'Failed to get order');
   }
 }

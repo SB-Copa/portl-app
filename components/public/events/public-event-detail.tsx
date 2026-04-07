@@ -84,7 +84,7 @@ export function PublicEventDetail({ event, tenantSubdomain, tenantName }: Public
                 <CardTitle>About this event</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="whitespace-pre-wrap">{event.description}</p>
+                <p className="whitespace-pre-wrap break-words">{event.description}</p>
               </CardContent>
             </Card>
           )}
@@ -98,8 +98,9 @@ export function PublicEventDetail({ event, tenantSubdomain, tenantName }: Public
                   <div key={image.id} className="relative aspect-[4/3] overflow-hidden rounded-lg">
                     <Image
                       src={image.url}
-                      alt={event.name}
+                      alt={`${event.name} gallery image`}
                       fill
+                      loading="lazy"
                       sizes="(max-width: 768px) 50vw, 33vw"
                       className="object-cover"
                     />
@@ -155,9 +156,9 @@ export function PublicEventDetail({ event, tenantSubdomain, tenantName }: Public
               <div className="flex items-start gap-3">
                 <MapPin className="h-5 w-5 text-muted-foreground mt-0.5" />
                 <div>
-                  <p className="font-medium">{event.venueName}</p>
+                  <p className="font-medium break-words">{event.venueName}</p>
                   {event.venueAddress && (
-                    <p className="text-sm text-muted-foreground mt-1">{event.venueAddress}</p>
+                    <p className="text-sm text-muted-foreground mt-1 break-words">{event.venueAddress}</p>
                   )}
                 </div>
               </div>
