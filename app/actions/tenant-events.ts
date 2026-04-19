@@ -153,7 +153,7 @@ export async function createEventForTenantAction(tenantSubdomain: string, data: 
         startTime: data.startTime,
         endDate,
         endTime: data.endTime,
-        status: data.status ?? 'DRAFT',
+        status: 'DRAFT',
         thumbnailUrl: data.thumbnailUrl ?? null,
       },
     });
@@ -224,11 +224,16 @@ export async function archiveEventForTenantAction(tenantSubdomain: string, event
       },
     });
 
-    revalidatePath(`/dashboard/${tenantSubdomain}/events/${eventId}`);
-    revalidatePath(`/dashboard/${tenantSubdomain}/events`);
-    revalidatePath(`/t/${tenantSubdomain}/events`);
-    revalidatePath(`/t/${tenantSubdomain}/events/${eventId}`);
-    revalidatePath(`/t/${tenantSubdomain}`);
+    try {
+      revalidatePath(`/dashboard/${tenantSubdomain}/events/${eventId}`);
+      revalidatePath(`/dashboard/${tenantSubdomain}/events`);
+      revalidatePath(`/t/${tenantSubdomain}/events`);
+      revalidatePath(`/t/${tenantSubdomain}/events/${eventId}`);
+      revalidatePath(`/t/${tenantSubdomain}`);
+    } catch {
+      // Revalidation errors should not mask a successful archive
+    }
+
     return { data: event };
   } catch (error) {
     return handleActionError(error, 'Failed to archive event');
@@ -249,11 +254,16 @@ export async function publishEventForTenantAction(tenantSubdomain: string, event
       },
     });
 
-    revalidatePath(`/dashboard/${tenantSubdomain}/events/${eventId}`);
-    revalidatePath(`/dashboard/${tenantSubdomain}/events`);
-    revalidatePath(`/t/${tenantSubdomain}/events`);
-    revalidatePath(`/t/${tenantSubdomain}/events/${eventId}`);
-    revalidatePath(`/t/${tenantSubdomain}`);
+    try {
+      revalidatePath(`/dashboard/${tenantSubdomain}/events/${eventId}`);
+      revalidatePath(`/dashboard/${tenantSubdomain}/events`);
+      revalidatePath(`/t/${tenantSubdomain}/events`);
+      revalidatePath(`/t/${tenantSubdomain}/events/${eventId}`);
+      revalidatePath(`/t/${tenantSubdomain}`);
+    } catch {
+      // Revalidation errors should not mask a successful publish
+    }
+
     return { data: event };
   } catch (error) {
     return handleActionError(error, 'Failed to publish event');
